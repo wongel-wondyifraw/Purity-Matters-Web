@@ -2,28 +2,23 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import {
+  type LucideIcon,
   HeartHandshake,
   User,
   Check,
   ChevronRight,
   ChevronLeft,
-  Calendar,
-  Clock,
   Phone,
   Shield,
   MessageCircle,
   Video,
   Users,
-  Sparkles,
+  ClipboardCheck,
   RefreshCw,
   Plus,
   Search,
   Building,
   Heart,
-  Zap,
-  Sunrise,
-  Sun,
-  Moon,
   FastForward,
 } from "lucide-react";
 import {
@@ -45,7 +40,7 @@ interface ConcernOption {
   id: string;
   label: string;
   botTag: string;
-  icon: React.ReactNode;
+  icon: LucideIcon;
   description: string;
 }
 
@@ -54,35 +49,35 @@ const CONCERN_OPTIONS: ConcernOption[] = [
     id: "personal",
     label: "Personal Concern",
     botTag: "Personal",
-    icon: <User className="w-4 h-4 text-[#202328]" />,
+    icon: User,
     description: "Individual spiritual struggles, habit renewal, mindset clarity",
   },
   {
     id: "relationship",
     label: "Relationship Concern",
     botTag: "Relationship",
-    icon: <HeartHandshake className="w-4 h-4 text-[#202328]" />,
+    icon: HeartHandshake,
     description: "Premarital counseling, courtship questions, healthy boundaries",
   },
   {
     id: "family",
     label: "Family Concern",
     botTag: "Family",
-    icon: <Users className="w-4 h-4 text-[#202328]" />,
+    icon: Users,
     description: "Family dynamics, reconciliation, parenting guidance",
   },
   {
     id: "purity",
     label: "Purity & Mindset Concern",
     botTag: "Purity",
-    icon: <Shield className="w-4 h-4 text-[#202328]" />,
+    icon: Shield,
     description: "Freedom from pornography, sexual purity, spiritual restoration",
   },
   {
     id: "emotional",
     label: "Emotional Concern",
     botTag: "Emotional Concerns",
-    icon: <Heart className="w-4 h-4 text-[#202328]" />,
+    icon: Heart,
     description: "Grief, depression, anxiety, unresolved emotional trauma",
   },
 ];
@@ -91,7 +86,7 @@ interface MethodOption {
   id: string;
   label: string;
   botTag: string;
-  icon: React.ReactNode;
+  icon: LucideIcon;
   hint: string;
 }
 
@@ -100,70 +95,33 @@ const METHOD_OPTIONS: MethodOption[] = [
     id: "telegram",
     label: "Telegram Chat / Audio",
     botTag: "Telegram Chat",
-    icon: <MessageCircle className="w-4 h-4 text-[#202328]" />,
+    icon: MessageCircle,
     hint: "Encrypted messaging or voice call directly on Telegram",
   },
   {
     id: "phone",
     label: "Direct Phone Call",
     botTag: "Phone Call",
-    icon: <Phone className="w-4 h-4 text-[#202328]" />,
+    icon: Phone,
     hint: "Direct cellular phone call to client phone number",
   },
   {
     id: "video",
     label: "Secure Video Call",
     botTag: "Video Call",
-    icon: <Video className="w-4 h-4 text-[#202328]" />,
+    icon: Video,
     hint: "Confidential Google Meet, Zoom, or Telegram video session",
   },
   {
     id: "in_person",
     label: "In-Person (if available)",
     botTag: "In-Person",
-    icon: <Building className="w-4 h-4 text-[#202328]" />,
+    icon: Building,
     hint: "Confidential face-to-face pastoral office meeting",
   },
 ];
 
-interface TimeOption {
-  id: string;
-  label: string;
-  botTag: string;
-  icon: React.ReactNode;
-  hours: string;
-}
 
-const TIME_OPTIONS: TimeOption[] = [
-  {
-    id: "next",
-    label: "Next Available Appointment",
-    botTag: "Next Available",
-    icon: <Zap className="w-4 h-4 text-[#202328]" />,
-    hours: "Earliest open slot across all pastoral counselors",
-  },
-  {
-    id: "morning",
-    label: "Morning (9:00 AM - 12:00 PM)",
-    botTag: "Morning (9am - 12pm)",
-    icon: <Sunrise className="w-4 h-4 text-[#202328]" />,
-    hours: "Between 09:00 AM and 12:00 PM EAT",
-  },
-  {
-    id: "afternoon",
-    label: "Afternoon (1:00 PM - 5:00 PM)",
-    botTag: "Afternoon (1pm - 5pm)",
-    icon: <Sun className="w-4 h-4 text-[#202328]" />,
-    hours: "Between 01:00 PM and 05:00 PM EAT",
-  },
-  {
-    id: "evening",
-    label: "Evening (6:00 PM - 9:00 PM)",
-    botTag: "Evening (6pm - 9pm)",
-    icon: <Moon className="w-4 h-4 text-[#202328]" />,
-    hours: "Between 06:00 PM and 09:00 PM EAT",
-  },
-];
 
 export function AddCounselingModal() {
   const { clients, addCounselingRequest } = useAdminData();
@@ -194,7 +152,6 @@ export function AddCounselingModal() {
     concern: "Personal Concern",
     description: "",
     preferredMethod: "Telegram Chat / Audio",
-    preferredTime: "Next Available Appointment",
     status: "pending",
     assignedTo: myName,
     scheduledAt: "",
@@ -253,7 +210,6 @@ export function AddCounselingModal() {
       concern: "Personal Concern",
       description: "",
       preferredMethod: "Telegram Chat / Audio",
-      preferredTime: "Next Available Appointment",
       status: "pending",
       assignedTo: myName,
       scheduledAt: "",
@@ -267,9 +223,7 @@ export function AddCounselingModal() {
   const isStep2Valid = formState.concern.trim().length > 0;
 
   // Step 3 Validation
-  const isStep3Valid =
-    formState.preferredMethod.trim().length > 0 &&
-    formState.preferredTime.trim().length > 0;
+  const isStep3Valid = formState.preferredMethod.trim().length > 0;
 
   const handleNext = () => {
     if (currentStep === 1 && !isStep1Valid) return;
@@ -321,7 +275,7 @@ export function AddCounselingModal() {
         <span>New Counselling Request</span>
       </DialogTrigger>
 
-      <DialogContent className="bg-white border border-black/[0.08] text-[#202328] w-full sm:max-w-2xl shadow-2xl rounded-2xl p-6 overflow-hidden flex flex-col max-h-[92vh]">
+      <DialogContent className="bg-white border border-black/[0.08] text-[#202328] w-full sm:max-w-2xl shadow-2xl rounded-2xl p-6 overflow-hidden flex flex-col">
         {/* Top-Right Quadrant Watermark Icon under Close button */}
         <div className="absolute -top-16 -right-16 pointer-events-none select-none text-black/[0.04] z-0">
           <HeartHandshake className="w-36 h-36" strokeWidth={1.2} />
@@ -349,13 +303,14 @@ export function AddCounselingModal() {
           <div className="pt-3">
             <div className="grid grid-cols-4 gap-2">
               {[
-                { step: 1, title: "Client Info" },
-                { step: 2, title: "Concern & Details" },
-                { step: 3, title: "Format & Window" },
-                { step: 4, title: "Review & Assign" },
+                { step: 1, title: "Client Info", icon: User },
+                { step: 2, title: "Concern & Details", icon: HeartHandshake },
+                { step: 3, title: "Session Format", icon: MessageCircle },
+                { step: 4, title: "Review & Assign", icon: ClipboardCheck },
               ].map((s) => {
                 const isActive = currentStep === s.step;
                 const isDone = currentStep > s.step;
+                const StepIcon = s.icon;
                 return (
                   <div
                     key={s.step}
@@ -369,15 +324,23 @@ export function AddCounselingModal() {
                     }`}
                   >
                     <div
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors ${
                         isActive
-                          ? "bg-[#F6CE46] text-[#202328]"
+                          ? "bg-white/20 text-white"
                           : isDone
                           ? "bg-[#202328] text-white"
                           : "bg-neutral-200 text-neutral-600"
                       }`}
                     >
-                      {isDone ? <Check className="w-3 h-3" /> : s.step}
+                      {isDone ? (
+                        <Check className="w-3 h-3 text-white" />
+                      ) : (
+                        <StepIcon
+                          className={`w-3 h-3 transition-colors ${
+                            isActive ? "text-white" : "text-neutral-500"
+                          }`}
+                        />
+                      )}
                     </div>
                     <span className="truncate text-[11px] font-medium hidden sm:inline">
                       {s.title}
@@ -390,11 +353,14 @@ export function AddCounselingModal() {
         </DialogHeader>
 
         {/* Multi-Step Body */}
-        <div className="flex-1 min-h-0 overflow-y-auto py-3 pr-1 space-y-4 relative z-10">
+        <div
+          className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-2 pr-0.5 space-y-4 relative z-10"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           {/* STEP 1: CLIENT SELECTION */}
           {currentStep === 1 && (
             <div id="counseling-step-1" className="space-y-4">
-              <div className="flex items-center justify-between pb-1">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-1">
                 <div>
                   <h4 className="text-xs font-bold text-[#202328] uppercase tracking-wider">
                     Step 1: Client Identification
@@ -404,17 +370,22 @@ export function AddCounselingModal() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-1 bg-neutral-100 p-0.5 rounded-full border border-black/10">
+                <div className="flex items-center gap-1 bg-neutral-100 p-0.5 rounded-full border border-black/10 shrink-0 self-start sm:self-auto">
                   <button
                     type="button"
                     onClick={() => setClientMode("existing")}
-                    className={`text-xs px-3 py-1 rounded-full font-semibold transition-all cursor-pointer ${
+                    className={`text-xs px-3 py-1 rounded-full font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
                       clientMode === "existing"
-                        ? "bg-white text-[#202328] shadow-2xs"
+                        ? "bg-[#202328] text-white shadow-2xs"
                         : "text-neutral-500 hover:text-[#202328]"
                     }`}
                   >
-                    Registered Client
+                    <Users
+                      className={`w-3.5 h-3.5 shrink-0 transition-colors ${
+                        clientMode === "existing" ? "text-white" : "text-neutral-500"
+                      }`}
+                    />
+                    <span className="whitespace-nowrap">Registered Client</span>
                   </button>
                   <button
                     type="button"
@@ -422,13 +393,18 @@ export function AddCounselingModal() {
                       setClientMode("manual");
                       setSelectedClientId(null);
                     }}
-                    className={`text-xs px-3 py-1 rounded-full font-semibold transition-all cursor-pointer ${
+                    className={`text-xs px-3 py-1 rounded-full font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
                       clientMode === "manual"
-                        ? "bg-white text-[#202328] shadow-2xs"
+                        ? "bg-[#202328] text-white shadow-2xs"
                         : "text-neutral-500 hover:text-[#202328]"
                     }`}
                   >
-                    Walk-in / External
+                    <User
+                      className={`w-3.5 h-3.5 shrink-0 transition-colors ${
+                        clientMode === "manual" ? "text-white" : "text-neutral-500"
+                      }`}
+                    />
+                    <span className="whitespace-nowrap">Walk-in / External</span>
                   </button>
                 </div>
               </div>
@@ -446,7 +422,10 @@ export function AddCounselingModal() {
                     />
                   </div>
 
-                  <div className="border border-black/[0.08] rounded-2xl bg-neutral-50/40 p-2 space-y-1.5 max-h-48 overflow-y-auto">
+                  <div
+                    className="border border-black/[0.08] rounded-2xl bg-neutral-50/40 p-2 space-y-1.5 max-h-48 overflow-y-auto no-scrollbar"
+                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                  >
                     {filteredClients.length === 0 ? (
                       <div className="p-4 text-center text-xs text-neutral-400">
                         No matching clients found. Switch to &quot;Walk-in / External&quot; to add manually.
@@ -461,25 +440,33 @@ export function AddCounselingModal() {
                             onClick={() => handleSelectClient(client)}
                             className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all border ${
                               isSelected
-                                ? "bg-white border-[#202328] shadow-xs ring-1 ring-[#202328]"
-                                : "bg-white/80 border-black/[0.06] hover:bg-white hover:border-black/20"
+                                ? "bg-[#202328] text-white border-[#202328] shadow-xs ring-1 ring-[#202328]"
+                                : "bg-white/80 border-black/[0.06] hover:bg-white hover:border-black/20 text-[#202328]"
                             }`}
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
                               <div
-                                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
+                                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
                                   isSelected
-                                    ? "bg-[#202328] text-white"
+                                    ? "bg-white/20 text-white"
                                     : "bg-neutral-100 text-[#202328]"
                                 }`}
                               >
                                 {client.fullName.charAt(0).toUpperCase()}
                               </div>
                               <div className="min-w-0">
-                                <div className="text-xs font-bold text-[#202328] truncate">
+                                <div
+                                  className={`text-xs font-bold truncate transition-colors ${
+                                    isSelected ? "text-white" : "text-[#202328]"
+                                  }`}
+                                >
                                   {client.fullName}
                                 </div>
-                                <div className="text-[11px] text-neutral-500 truncate">
+                                <div
+                                  className={`text-[11px] truncate transition-colors ${
+                                    isSelected ? "text-neutral-300" : "text-neutral-500"
+                                  }`}
+                                >
                                   {client.phone && client.phone !== "Not shared"
                                     ? client.phone
                                     : client.username
@@ -490,8 +477,8 @@ export function AddCounselingModal() {
                             </div>
 
                             {isSelected && (
-                              <div className="flex items-center gap-1 text-[11px] font-bold text-[#202328] bg-[#F6CE46]/30 px-2 py-0.5 rounded-full border border-[#F6CE46]/50">
-                                <Check className="w-3 h-3" />
+                              <div className="flex items-center gap-1 text-[11px] font-bold text-white bg-white/20 px-2.5 py-0.5 rounded-full border border-white/30">
+                                <Check className="w-3 h-3 text-white" />
                                 <span>Selected</span>
                               </div>
                             )}
@@ -500,22 +487,6 @@ export function AddCounselingModal() {
                       })
                     )}
                   </div>
-
-                  {/* Summary of Selected Client */}
-                  {selectedClientId && (
-                    <div className="p-3 bg-neutral-100/70 border border-black/10 rounded-2xl flex items-center justify-between text-xs">
-                      <div>
-                        <span className="text-neutral-500 font-medium">Selected Client: </span>
-                        <span className="font-bold text-[#202328]">{formState.clientName}</span>
-                        {formState.phone && (
-                          <span className="text-neutral-500 ml-2">({formState.phone})</span>
-                        )}
-                      </div>
-                      <span className="text-[10px] font-mono bg-white px-2 py-0.5 rounded-md border border-black/10 text-neutral-600">
-                        TG ID: {formState.telegramId || "Linked"}
-                      </span>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="space-y-3 p-4 bg-neutral-50/50 rounded-2xl border border-black/[0.06]">
@@ -586,6 +557,7 @@ export function AddCounselingModal() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {CONCERN_OPTIONS.map((c) => {
                   const isSelected = formState.concern === c.label;
+                  const Icon = c.icon;
                   return (
                     <div
                       key={c.id}
@@ -600,19 +572,23 @@ export function AddCounselingModal() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2.5">
                           <div
-                            className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 ${
+                            className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                               isSelected
-                                ? "bg-white/10 text-white"
-                                : "bg-neutral-200/60 text-[#202328]"
+                                ? "bg-white/20 text-white"
+                                : "bg-neutral-200/70 text-[#202328]"
                             }`}
                           >
-                            {c.icon}
+                            <Icon
+                              className={`w-4 h-4 transition-colors ${
+                                isSelected ? "text-white" : "text-[#202328]"
+                              }`}
+                            />
                           </div>
                           <span className="font-bold text-xs">{c.label}</span>
                         </div>
                         {isSelected && (
-                          <div className="w-4 h-4 rounded-full bg-[#F6CE46] text-[#202328] flex items-center justify-center shrink-0">
-                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          <div className="w-4 h-4 rounded-full bg-white/20 text-white flex items-center justify-center shrink-0 border border-white/30">
+                            <Check className="w-2.5 h-2.5 stroke-[3] text-white" />
                           </div>
                         )}
                       </div>
@@ -662,122 +638,69 @@ export function AddCounselingModal() {
             </div>
           )}
 
-          {/* STEP 3: SESSION METHOD & APPOINTMENT WINDOW */}
+          {/* STEP 3: SESSION METHOD */}
           {currentStep === 3 && (
             <div id="counseling-step-3" className="space-y-4">
               <div>
                 <h4 className="text-xs font-bold text-[#202328] uppercase tracking-wider">
-                  Step 3: Session Format & Appointment Window
+                  Step 3: Preferred Session Format
                 </h4>
                 <p className="text-xs text-neutral-500">
-                  Select the communication channel and preferred schedule matching the bot flow.
+                  Select the communication channel for the counselling session.
                 </p>
               </div>
 
               {/* Preferred Method (4 choices) */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-[#202328] block">
-                  Preferred Session Format
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {METHOD_OPTIONS.map((m) => {
-                    const isSelected = formState.preferredMethod === m.label;
-                    return (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {METHOD_OPTIONS.map((m) => {
+                  const isSelected = formState.preferredMethod === m.label;
+                  const Icon = m.icon;
+                  return (
+                    <div
+                      key={m.id}
+                      id={`method-card-${m.id}`}
+                      onClick={() =>
+                        setFormState({ ...formState, preferredMethod: m.label })
+                      }
+                      className={`p-3 rounded-2xl border cursor-pointer transition-all flex items-start gap-3 ${
+                        isSelected
+                          ? "bg-[#202328] text-white border-[#202328] shadow-md ring-1 ring-[#202328]"
+                          : "bg-neutral-50/70 border-black/[0.08] hover:bg-white hover:border-black/20 text-[#202328]"
+                      }`}
+                    >
                       <div
-                        key={m.id}
-                        id={`method-card-${m.id}`}
-                        onClick={() =>
-                          setFormState({ ...formState, preferredMethod: m.label })
-                        }
-                        className={`p-3 rounded-2xl border cursor-pointer transition-all flex items-start gap-3 ${
+                        className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                           isSelected
-                            ? "bg-[#202328] text-white border-[#202328] shadow-md ring-1 ring-[#202328]"
-                            : "bg-neutral-50/70 border-black/[0.08] hover:bg-white hover:border-black/20 text-[#202328]"
+                            ? "bg-white/20 text-white"
+                            : "bg-neutral-200/70 text-[#202328]"
                         }`}
                       >
-                        <div
-                          className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 ${
-                            isSelected
-                              ? "bg-white/10 text-white"
-                              : "bg-neutral-200/60 text-[#202328]"
+                        <Icon
+                          className={`w-4 h-4 transition-colors ${
+                            isSelected ? "text-white" : "text-[#202328]"
+                          }`}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs">{m.label}</span>
+                          {isSelected && (
+                            <div className="w-4 h-4 rounded-full bg-white/20 text-white flex items-center justify-center shrink-0 border border-white/30">
+                              <Check className="w-2.5 h-2.5 stroke-[3] text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <p
+                          className={`text-[11px] mt-0.5 leading-snug ${
+                            isSelected ? "text-neutral-300" : "text-neutral-500"
                           }`}
                         >
-                          {m.icon}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-xs">{m.label}</span>
-                            {isSelected && (
-                              <div className="w-4 h-4 rounded-full bg-[#F6CE46] text-[#202328] flex items-center justify-center shrink-0">
-                                <Check className="w-2.5 h-2.5 stroke-[3]" />
-                              </div>
-                            )}
-                          </div>
-                          <p
-                            className={`text-[11px] mt-0.5 leading-snug ${
-                              isSelected ? "text-neutral-300" : "text-neutral-500"
-                            }`}
-                          >
-                            {m.hint}
-                          </p>
-                        </div>
+                          {m.hint}
+                        </p>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Preferred Time Window (4 choices) */}
-              <div className="space-y-2 pt-2 border-t border-black/[0.06]">
-                <label className="text-xs font-semibold text-[#202328] block">
-                  Preferred Appointment Window
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {TIME_OPTIONS.map((t) => {
-                    const isSelected = formState.preferredTime === t.label;
-                    return (
-                      <div
-                        key={t.id}
-                        id={`time-card-${t.id}`}
-                        onClick={() =>
-                          setFormState({ ...formState, preferredTime: t.label })
-                        }
-                        className={`p-3 rounded-2xl border cursor-pointer transition-all flex items-start gap-2.5 ${
-                          isSelected
-                            ? "bg-[#202328] text-white border-[#202328] shadow-md ring-1 ring-[#202328]"
-                            : "bg-neutral-50/70 border-black/[0.08] hover:bg-white hover:border-black/20 text-[#202328]"
-                        }`}
-                      >
-                        <div
-                          className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 ${
-                            isSelected
-                              ? "bg-white/10 text-white"
-                              : "bg-neutral-200/60 text-[#202328]"
-                          }`}
-                        >
-                          {t.icon}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-xs">{t.label}</span>
-                            {isSelected && (
-                              <div className="w-4 h-4 rounded-full bg-[#F6CE46] text-[#202328] flex items-center justify-center shrink-0">
-                                <Check className="w-2.5 h-2.5 stroke-[3]" />
-                              </div>
-                            )}
-                          </div>
-                          <p
-                            className={`text-[11px] mt-0.5 leading-snug ${
-                              isSelected ? "text-neutral-300" : "text-neutral-500"
-                            }`}
-                          >
-                            {t.hours}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -794,10 +717,10 @@ export function AddCounselingModal() {
                 </p>
               </div>
 
-              {/* Status and Counselor Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-neutral-50/70 rounded-2xl border border-black/[0.06]">
-                {/* Initial Status */}
-                <div>
+              {/* Status and Counselor Row: Compact Status, Wider Counselor Select */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 p-4 bg-neutral-50/70 rounded-2xl border border-black/[0.06]">
+                {/* Initial Status (Compact) */}
+                <div className="w-full sm:w-44 shrink-0">
                   <label className="text-xs font-semibold text-[#202328] block mb-1">
                     Initial Status
                   </label>
@@ -810,17 +733,17 @@ export function AddCounselingModal() {
                         status: e.target.value as NewCounselingPayload["status"],
                       })
                     }
-                    className="w-full bg-white border border-black/15 text-xs rounded-xl px-3 py-2 text-[#202328] font-medium focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer"
+                    className="w-full bg-white border border-black/15 text-xs rounded-xl px-3 h-9.5 text-[#202328] font-medium focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer"
                   >
-                    <option value="pending">Pending (Unassigned)</option>
-                    <option value="assigned">Assigned to Counselor</option>
-                    <option value="scheduled">Scheduled Appointment</option>
-                    <option value="completed">Completed Session</option>
+                    <option value="pending">Pending</option>
+                    <option value="assigned">Assigned</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="completed">Completed</option>
                   </select>
                 </div>
 
-                {/* Counselor Assignment with Search-enabled dropdown */}
-                <div>
+                {/* Counselor Assignment with Search-enabled dropdown (Wider) */}
+                <div className="flex-1 min-w-0">
                   <label className="text-xs font-semibold text-[#202328] block mb-1">
                     Assign Counselor
                   </label>
@@ -838,7 +761,7 @@ export function AddCounselingModal() {
               <div className="border border-black/[0.08] rounded-2xl p-4 bg-white shadow-xs space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-black/[0.06]">
                   <span className="text-xs font-bold text-[#202328] uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#F6CE46]" />
+                    <ClipboardCheck className="w-3.5 h-3.5 text-[#F6CE46]" />
                     <span>Intake Summary Review</span>
                   </span>
                   <span className="text-[11px] font-bold text-[#202328] bg-[#F6CE46]/30 px-2.5 py-0.5 rounded-full border border-[#F6CE46]/40">
@@ -877,15 +800,6 @@ export function AddCounselingModal() {
 
                   <div>
                     <span className="text-neutral-400 block text-[10px] uppercase font-bold">
-                      Time Window
-                    </span>
-                    <span className="text-neutral-700 font-medium">
-                      {formState.preferredTime}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-neutral-400 block text-[10px] uppercase font-bold">
                       Initial Status
                     </span>
                     <span className="font-bold uppercase text-[10px] bg-neutral-100 px-2 py-0.5 rounded-full border border-black/10 inline-block mt-0.5">
@@ -893,12 +807,12 @@ export function AddCounselingModal() {
                     </span>
                   </div>
 
-                  <div>
+                  <div className="col-span-2">
                     <span className="text-neutral-400 block text-[10px] uppercase font-bold">
-                      Assigned To
+                      Assigned Counselor
                     </span>
-                    <span className="text-neutral-700 font-medium">
-                      {formState.assignedTo || "— Unassigned —"}
+                    <span className="text-neutral-800 font-semibold text-xs">
+                      {formState.assignedTo || myName || "Me"}
                     </span>
                   </div>
                 </div>

@@ -159,7 +159,7 @@ export function SearchableCounselorSelect({
     setIsOpen(false);
   };
 
-  const displayText = value ? value : "— Unassigned —";
+  const displayText = value || placeholder;
 
   return (
     <div
@@ -177,7 +177,7 @@ export function SearchableCounselorSelect({
       >
         <div className="flex items-center gap-2 truncate min-w-0">
           <User className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-          <span className="truncate">{displayText || placeholder}</span>
+          <span className="truncate">{displayText}</span>
         </div>
         <ChevronDown
           className={`w-3.5 h-3.5 text-neutral-400 shrink-0 transition-transform ${
@@ -190,7 +190,8 @@ export function SearchableCounselorSelect({
       {isOpen && (
         <div
           id={`${id}-menu`}
-          className="absolute z-50 mt-1 w-full min-w-[240px] rounded-xl bg-white border border-black/10 shadow-xl p-1.5 text-[#202328] overflow-hidden"
+          className="absolute z-50 mt-1 w-full min-w-[240px] rounded-xl bg-white border border-black/10 shadow-xl p-1.5 text-[#202328] overflow-hidden no-scrollbar"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {/* Search Input */}
           <div className="relative mb-1.5">
@@ -215,22 +216,10 @@ export function SearchableCounselorSelect({
             )}
           </div>
 
-          <div className="max-h-52 overflow-y-auto space-y-0.5">
-            {/* Unassigned Option */}
-            {!searchQuery && (
-              <div
-                id={`${id}-opt-unassigned`}
-                onClick={() => handleSelect("")}
-                className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer text-xs transition-colors ${
-                  !value
-                    ? "bg-[#202328] text-white font-semibold"
-                    : "hover:bg-neutral-100 text-neutral-600"
-                }`}
-              >
-                <span>— Unassigned —</span>
-                {!value && <Check className="w-3.5 h-3.5 text-[#F6CE46]" />}
-              </div>
-            )}
+          <div
+            className="max-h-56 overflow-y-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0 space-y-0.5"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
 
             {/* List of Registered Users */}
             {filteredOptions.length === 0 ? (
@@ -254,9 +243,9 @@ export function SearchableCounselorSelect({
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <div
-                        className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                        className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors ${
                           isSelected
-                            ? "bg-[#F6CE46] text-[#202328]"
+                            ? "bg-white/20 text-white"
                             : "bg-neutral-100 text-neutral-600"
                         }`}
                       >
@@ -276,7 +265,7 @@ export function SearchableCounselorSelect({
                       )}
                     </div>
                     {isSelected && (
-                      <Check className="w-3.5 h-3.5 text-[#F6CE46] shrink-0" />
+                      <Check className="w-3.5 h-3.5 text-white shrink-0" />
                     )}
                   </div>
                 );

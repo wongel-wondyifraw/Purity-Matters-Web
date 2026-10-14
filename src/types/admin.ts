@@ -30,7 +30,7 @@ export interface CounselingRecord {
   concern: string;
   description: string;
   preferredMethod: string;
-  preferredTime: string;
+  preferredTime?: string;
   status: "pending" | "assigned" | "scheduled" | "completed";
   assignedTo?: string;
   scheduledAt?: string;
@@ -44,7 +44,7 @@ export interface NewCounselingPayload {
   concern: string;
   description?: string;
   preferredMethod: string;
-  preferredTime: string;
+  preferredTime?: string;
   status?: "pending" | "assigned" | "scheduled" | "completed";
   assignedTo?: string;
   scheduledAt?: string;

@@ -68,7 +68,7 @@ export function ActivitiesView() {
         type: "counseling",
         title: "Counselling Intake",
         client: c.clientName,
-        detail: `Issue: ${c.concern} • ${c.preferredTime}`,
+        detail: `Issue: ${c.concern}${c.preferredMethod ? ` • ${c.preferredMethod}` : ""}`,
         timestamp: c.createdAt,
         badge: c.status.toUpperCase(),
       });

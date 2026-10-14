@@ -98,9 +98,6 @@ export function CounselingTable() {
                   Preferred Method
                 </TableHead>
                 <TableHead className="text-[#202328] font-bold text-xs py-3">
-                  Preferred Time
-                </TableHead>
-                <TableHead className="text-[#202328] font-bold text-xs py-3">
                   Status
                 </TableHead>
                 <TableHead className="text-[#202328] font-bold text-xs py-3">
@@ -115,7 +112,7 @@ export function CounselingTable() {
               {isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
+                    colSpan={7}
                     className="text-center py-12 text-neutral-500 text-xs"
                   >
                     <div className="flex flex-col items-center justify-center gap-2">
@@ -127,7 +124,7 @@ export function CounselingTable() {
               ) : filteredCounseling.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
+                    colSpan={7}
                     className="text-center py-12 text-neutral-500 text-sm"
                   >
                     <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
@@ -171,9 +168,6 @@ export function CounselingTable() {
                     </TableCell>
                     <TableCell className="text-neutral-700 text-xs font-medium">
                       {item.preferredMethod}
-                    </TableCell>
-                    <TableCell className="text-neutral-700 text-xs font-medium">
-                      {item.preferredTime}
                     </TableCell>
                     <TableCell>
                       <span

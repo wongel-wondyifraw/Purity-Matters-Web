@@ -184,3 +184,22 @@
 *::-webkit-scrollbar-thumb:hover {
   background: rgba(32, 35, 40, 0.28);
 }
+
+/* Absolute scrollbar suppression utility */
+.no-scrollbar,
+.no-scrollbar *,
+[data-slot="dialog-content"],
+[data-slot="dialog-content"] * {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.no-scrollbar::-webkit-scrollbar,
+.no-scrollbar *::-webkit-scrollbar,
+[data-slot="dialog-content"]::-webkit-scrollbar,
+[data-slot="dialog-content"] *::-webkit-scrollbar {
+  display: none !important;
+  width: 0px !important;
+  height: 0px !important;
+  background: transparent !important;
+}
