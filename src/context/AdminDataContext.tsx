@@ -953,6 +953,50 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
           "Counselling Request Created",
           `Request ${formattedCreated.referenceNumber} for "${formattedCreated.clientName}" created successfully.`
         );
+
+        // Refresh clients list so the newly registered walk-in client immediately appears in web console state
+        try {
+          const clientRes = await fetch(`${apiUrl}/api/admin/clients`, {
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            signal: AbortSignal.timeout(5000),
+          });
+          if (clientRes.ok) {
+            const rawClients = await clientRes.json();
+            if (Array.isArray(rawClients)) {
+              const mappedClients: ClientRecord[] = rawClients.map((item: any) => ({
+                id: item.id,
+                telegramId: String(item.telegramId),
+                fullName:
+                  item.fullName ||
+                  (item.firstName
+                    ? `${item.firstName} ${item.lastName || ""}`.trim()
+                    : `User #${item.telegramId}`),
+                username: item.username || null,
+                firstName: item.firstName || null,
+                lastName: item.lastName || null,
+                languageCode: item.languageCode || "en",
+                phone: item.phone || "Not shared",
+                role: item.role || "client",
+                isRegistered: !!item.isRegistered,
+                registrationStep:
+                  item.registrationStep || (item.isRegistered ? "completed" : "pending"),
+                counselingCount: item.counselingCount ?? 0,
+                innerHealingCount: item.innerHealingCount ?? 0,
+                coursesCount: item.coursesCount ?? 0,
+                purchasesCount: item.purchasesCount ?? 0,
+                metadata: item.metadata || {},
+                joinedAt: formatDateTime(item.createdAt),
+                updatedAt: formatDateTime(item.updatedAt || item.createdAt),
+              }));
+              setClients(mappedClients);
+            }
+          }
+        } catch {
+          // Non-critical background refresh failure
+        }
+
         return true;
       } catch (err: any) {
         toast.error("Network Error", err.message || "Could not connect to backend server.");
