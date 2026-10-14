@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/toast";
+import { QueryProvider } from "@/providers/QueryProvider";
 import { AuthProvider } from "@/context/AuthContext";
 import { AdminDataProvider } from "@/context/AdminDataContext";
 
@@ -28,11 +29,13 @@ export default function RootLayout({
     >
       <body className={`${inter.className} h-full max-h-screen text-[#202328] flex flex-col font-sans overflow-hidden bg-[#EBECEF] selection:bg-[#F6CE46] selection:text-[#202328]`}>
         <ToastProvider>
-          <AuthProvider>
-            <AdminDataProvider>
-              {children}
-            </AdminDataProvider>
-          </AuthProvider>
+          <QueryProvider>
+            <AuthProvider>
+              <AdminDataProvider>
+                {children}
+              </AdminDataProvider>
+            </AuthProvider>
+          </QueryProvider>
         </ToastProvider>
       </body>
     </html>

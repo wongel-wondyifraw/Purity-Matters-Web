@@ -48,14 +48,14 @@ export function ClientsTable() {
     clients,
     deleteClient,
     isLoading,
-    searchQuery,
-    setSearchQuery,
     clientFilter,
     setClientFilter,
     exportClientsCsv,
     copyToClipboard,
     copiedId,
   } = useAdminData();
+
+  const [searchQuery, setSearchQuery] = useState("");
 
   // State for modals
   const [clientToEdit, setClientToEdit] = useState<ClientRecord | null>(null);

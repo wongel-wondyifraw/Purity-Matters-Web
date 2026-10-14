@@ -35,15 +35,22 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAdminData } from "@/context/AdminDataContext";
+import { useAuth } from "@/context/AuthContext";
 import { AnonymousQuestionRecord } from "@/types/admin";
 
 export function AnonymousQuestionsTable() {
   const { anonymousQuestions, answerAnonymousQuestion } = useAdminData();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedQuestion, setSelectedQuestion] =
     useState<AnonymousQuestionRecord | null>(null);
   const [answerDraft, setAnswerDraft] = useState<string>("");
+
+  const counselorName = useMemo(() => {
+    if (!user) return "Admin Pastoral Care";
+    return user.fullName || `${user.firstName} ${user.lastName || ""}`.trim() || "Pastoral Counselor";
+  }, [user]);
 
   const filteredQuestions = useMemo(() => {
     return anonymousQuestions.filter((item) => {
@@ -66,7 +73,7 @@ export function AnonymousQuestionsTable() {
 
   const handleSendAnswer = () => {
     if (!selectedQuestion || !answerDraft.trim()) return;
-    answerAnonymousQuestion(selectedQuestion.id, answerDraft.trim());
+    answerAnonymousQuestion(selectedQuestion.id, answerDraft.trim(), counselorName);
     setSelectedQuestion(null);
     setAnswerDraft("");
   };

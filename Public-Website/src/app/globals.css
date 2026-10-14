@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-charcoal: #202328;
+  --color-gold: #F6CE46;
+  --color-gold-deep: #D4A818;
+  --color-canvas: #EBECEF;
+  --color-surface: #FFFFFF;
+  --color-surface-dim: #F8F9FA;
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+:root {
+  --background: #EBECEF;
+  --foreground: #202328;
+  --card: #FFFFFF;
+  --card-foreground: #202328;
+  --primary: #F6CE46;
+  --primary-foreground: #202328;
+  --border: rgba(32, 35, 40, 0.08);
+}
+
+body {
+  background-color: #EBECEF;
+  color: #202328;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(32, 35, 40, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(32, 35, 40, 0.25);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Subtle floating animations for background security & anonymity icons */
+@keyframes float-gentle {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(2deg);
+  }
+}
+
+@keyframes float-reverse {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(9px) rotate(-2deg);
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(-1.5deg);
+  }
+}
+
+.animate-float-1 {
+  animation: float-gentle 6s ease-in-out infinite;
+}
+
+.animate-float-2 {
+  animation: float-reverse 7.5s ease-in-out infinite;
+}
+
+.animate-float-3 {
+  animation: float-slow 8.5s ease-in-out infinite;
+}
