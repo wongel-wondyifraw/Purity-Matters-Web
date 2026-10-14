@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { HeartHandshake, RefreshCw } from "lucide-react";
+import { HeartHandshake, RefreshCw, Trash2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -27,6 +27,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAdminData } from "@/context/AdminDataContext";
+import { AddCounselingModal } from "./AddCounselingModal";
+import { SearchableCounselorSelect } from "./SearchableCounselorSelect";
 
 export function CounselingTable() {
   const {
@@ -35,6 +37,7 @@ export function CounselingTable() {
     counselingFilter,
     setCounselingFilter,
     updateCounselingStatus,
+    deleteCounselingRequest,
   } = useAdminData();
 
   const filteredCounseling = useMemo(() => {
@@ -59,6 +62,7 @@ export function CounselingTable() {
 
         <div className="flex items-center gap-2">
           <select
+            id="select-counseling-filter"
             className="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer"
             value={counselingFilter}
             onChange={(e) => setCounselingFilter(e.target.value)}
@@ -69,6 +73,8 @@ export function CounselingTable() {
             <option value="scheduled">Scheduled</option>
             <option value="completed">Completed</option>
           </select>
+
+          <AddCounselingModal />
         </div>
       </CardHeader>
 
@@ -216,25 +222,29 @@ export function CounselingTable() {
                                 {item.description}
                               </p>
                             </div>
-                            <div className="space-y-2">
+                            {/* Counselor Assignment with Searchable dropdown */}
+                            <div className="space-y-1.5">
                               <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">
-                                Update Status
+                                Assign Counselor
+                              </label>
+                              <SearchableCounselorSelect
+                                id={`manage-counselor-${item.id}`}
+                                value={item.assignedTo || ""}
+                                onChange={(newCounselor) =>
+                                  updateCounselingStatus(
+                                    item.id,
+                                    item.status === "pending" && newCounselor ? "assigned" : item.status,
+                                    newCounselor
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <div className="space-y-2 pt-2 border-t border-black/[0.06]">
+                              <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">
+                                Workflow Status
                               </label>
                               <div className="flex flex-wrap gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() =>
-                                    updateCounselingStatus(
-                                      item.id,
-                                      "assigned",
-                                      "Pastor Samuel"
-                                    )
-                                  }
-                                  className="text-xs rounded-full border-black/15 bg-white text-[#202328] hover:bg-neutral-50 cursor-pointer shadow-2xs font-semibold"
-                                >
-                                  Assign Pastor Samuel
-                                </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -255,6 +265,30 @@ export function CounselingTable() {
                                   Mark Completed
                                 </Button>
                               </div>
+                            </div>
+
+                            {/* Delete Action */}
+                            <div className="pt-3 border-t border-black/[0.06] flex items-center justify-between">
+                              <span className="text-[11px] text-neutral-400">
+                                Remove request from system
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  if (
+                                    window.confirm(
+                                      `Are you sure you want to delete counselling request ${item.referenceNumber}? This action cannot be undone.`
+                                    )
+                                  ) {
+                                    deleteCounselingRequest(item.id);
+                                  }
+                                }}
+                                className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded-full cursor-pointer h-7 px-3 flex items-center gap-1 font-medium transition-all"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Delete Request</span>
+                              </Button>
                             </div>
                           </div>
                         </DialogContent>

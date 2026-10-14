@@ -19,10 +19,12 @@ import {
   ResourceCatalogItem,
   PhysicalBookOrderItem,
   NewResourcePayload,
+  NewCounselingPayload,
 } from "@/types/admin";
+import { ConsoleUser } from "@/types/auth";
 import { useToast } from "@/components/ui/toast";
 
-export type { NewResourcePayload };
+export type { NewResourcePayload, NewCounselingPayload, ConsoleUser };
 
 export interface NewClientPayload {
   fullName: string;
@@ -44,6 +46,7 @@ interface AdminDataContextType {
   anonymousQuestions: AnonymousQuestionRecord[];
   resourceCatalog: ResourceCatalogItem[];
   physicalBookOrders: PhysicalBookOrderItem[];
+  systemUsers: ConsoleUser[];
 
   // Server & Connection State
   apiUrl: string;
@@ -61,6 +64,8 @@ interface AdminDataContextType {
   setClientFilter: (filter: string) => void;
   counselingFilter: string;
   setCounselingFilter: (filter: string) => void;
+  counselingAssignmentFilter: string;
+  setCounselingAssignmentFilter: (filter: string) => void;
 
   // Active selections & helpers
   selectedClient: ClientRecord | null;
@@ -97,6 +102,8 @@ interface AdminDataContextType {
     status: CounselingRecord["status"],
     assignedTo?: string
   ) => Promise<void>;
+  addCounselingRequest: (payload: NewCounselingPayload) => Promise<boolean>;
+  deleteCounselingRequest: (id: number) => Promise<boolean>;
   updateInnerHealingStatus: (
     id: number,
     status: InnerHealingRecord["status"]
@@ -137,11 +144,13 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [counselingFilter, setCounselingFilter] = useState<string>("all");
+  const [counselingAssignmentFilter, setCounselingAssignmentFilter] = useState<string>("me");
   const [selectedClient, setSelectedClient] = useState<ClientRecord | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Entities state
   const [clients, setClients] = useState<ClientRecord[]>([]);
+  const [systemUsers, setSystemUsers] = useState<ConsoleUser[]>([]);
   const [counselingRequests, setCounselingRequests] = useState<CounselingRecord[]>([]);
   const [innerHealingRequests, setInnerHealingRequests] = useState<InnerHealingRecord[]>([]);
   const [courseProgressList, setCourseProgressList] = useState<CourseProgressRecord[]>([]);
@@ -373,6 +382,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
           resourcesRes,
           catalogRes,
           ordersRes,
+          usersRes,
         ] = await Promise.allSettled([
           fetch(`${apiUrl}/api/admin/clients`, {
             headers: {
@@ -423,6 +433,14 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
             signal: AbortSignal.timeout(6000),
           }),
           fetch(`${apiUrl}/api/admin/resources/orders`, {
+            headers: {
+              ...(typeof window !== "undefined" && localStorage.getItem("purity_console_token")
+                ? { Authorization: `Bearer ${localStorage.getItem("purity_console_token")}` }
+                : {}),
+            },
+            signal: AbortSignal.timeout(6000),
+          }),
+          fetch(`${apiUrl}/api/users`, {
             headers: {
               ...(typeof window !== "undefined" && localStorage.getItem("purity_console_token")
                 ? { Authorization: `Bearer ${localStorage.getItem("purity_console_token")}` }
@@ -613,6 +631,14 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
                 createdAt: formatDateTime(o.createdAt),
               }))
             );
+          }
+        }
+
+        // Handle console users
+        if (usersRes.status === "fulfilled" && usersRes.value.ok) {
+          const rawUsers = await usersRes.value.json();
+          if (Array.isArray(rawUsers)) {
+            setSystemUsers(rawUsers);
           }
         }
 
@@ -834,14 +860,22 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     async (id: number, status: CounselingRecord["status"], assignedTo?: string) => {
       setCounselingRequests((prev) =>
         prev.map((req) =>
-          req.id === id ? { ...req, status, ...(assignedTo ? { assignedTo } : {}) } : req
+          req.id === id ? { ...req, status, ...(assignedTo !== undefined ? { assignedTo } : {}) } : req
         )
       );
 
       try {
+        const token =
+          typeof window !== "undefined"
+            ? localStorage.getItem("purity_console_token")
+            : null;
+
         const res = await fetch(`${apiUrl}/api/admin/counseling/${id}`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ status, assignedTo }),
         });
 
@@ -851,10 +885,120 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
             `Counseling Request #${id} status updated to ${status.toUpperCase()}.`
           );
         } else {
-          toast.success("Request Updated", `Counseling Request #${id} status updated.`);
+          let errMessage = "Failed to update counseling status";
+          try {
+            const errData = await res.json();
+            errMessage = errData.message || errMessage;
+          } catch {
+            errMessage = `Server error ${res.status}: ${res.statusText}`;
+          }
+          toast.error("Update Failed", errMessage);
         }
-      } catch {
-        toast.success("Request Updated", `Counseling Request #${id} status updated.`);
+      } catch (err: any) {
+        toast.error("Network Error", err.message || "Failed to update status.");
+      }
+    },
+    [apiUrl, toast]
+  );
+
+  // Mutation: Add new counseling request (admin manual intake)
+  const addCounselingRequest = useCallback(
+    async (payload: NewCounselingPayload): Promise<boolean> => {
+      try {
+        const token =
+          typeof window !== "undefined"
+            ? localStorage.getItem("purity_console_token")
+            : null;
+
+        const res = await fetch(`${apiUrl}/api/admin/counseling`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          let errMessage = "Failed to create counseling request";
+          try {
+            const errData = await res.json();
+            errMessage = errData.message || errMessage;
+          } catch {
+            errMessage = `Server error ${res.status}: ${res.statusText}`;
+          }
+          toast.error("Intake Failed", errMessage);
+          return false;
+        }
+
+        const created: any = await res.json();
+        const formattedCreated: CounselingRecord = {
+          id: created.id,
+          referenceNumber: created.referenceNumber || `CN-${created.id}`,
+          telegramId: String(created.telegramId || payload.telegramId || ""),
+          clientName: created.clientName || payload.clientName,
+          phone: created.phone || payload.phone || "N/A",
+          concern: created.concern || payload.concern,
+          description: created.description || payload.description || "Not specified",
+          preferredMethod: created.preferredMethod || payload.preferredMethod,
+          preferredTime: created.preferredTime || payload.preferredTime,
+          status: (created.status || payload.status || "pending") as CounselingRecord["status"],
+          assignedTo: created.assignedTo || payload.assignedTo || undefined,
+          scheduledAt: created.scheduledAt ? formatDateTime(created.scheduledAt) : undefined,
+          createdAt: formatDateTime(created.createdAt || new Date()),
+        };
+
+        setCounselingRequests((prev) => [formattedCreated, ...prev]);
+        toast.success(
+          "Counselling Request Created",
+          `Request ${formattedCreated.referenceNumber} for "${formattedCreated.clientName}" created successfully.`
+        );
+        return true;
+      } catch (err: any) {
+        toast.error("Network Error", err.message || "Could not connect to backend server.");
+        return false;
+      }
+    },
+    [apiUrl, toast]
+  );
+
+  // Mutation: Delete counseling request
+  const deleteCounselingRequest = useCallback(
+    async (id: number): Promise<boolean> => {
+      try {
+        const token =
+          typeof window !== "undefined"
+            ? localStorage.getItem("purity_console_token")
+            : null;
+
+        const res = await fetch(`${apiUrl}/api/admin/counseling/${id}`, {
+          method: "DELETE",
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+
+        if (!res.ok) {
+          let errMessage = "Failed to delete counseling request";
+          try {
+            const errData = await res.json();
+            errMessage = errData.message || errMessage;
+          } catch {
+            errMessage = `Server error ${res.status}: ${res.statusText}`;
+          }
+          toast.error("Delete Failed", errMessage);
+          return false;
+        }
+
+        setCounselingRequests((prev) => prev.filter((r) => r.id !== id));
+        toast.success(
+          "Request Deleted",
+          `Counseling request #${id} has been permanently deleted.`
+        );
+        return true;
+      } catch (err: any) {
+        toast.error("Network Error", err.message || "Could not connect to backend server.");
+        return false;
       }
     },
     [apiUrl, toast]
@@ -1322,6 +1466,9 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         setClientFilter,
         counselingFilter,
         setCounselingFilter,
+        counselingAssignmentFilter,
+        setCounselingAssignmentFilter,
+        systemUsers,
         selectedClient,
         setSelectedClient,
         copiedId,
@@ -1348,6 +1495,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         deleteClient,
         updateClientRole,
         updateCounselingStatus,
+        addCounselingRequest,
+        deleteCounselingRequest,
         updateInnerHealingStatus,
         answerAnonymousQuestion,
         addResource,

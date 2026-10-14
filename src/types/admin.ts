@@ -33,7 +33,21 @@ export interface CounselingRecord {
   preferredTime: string;
   status: "pending" | "assigned" | "scheduled" | "completed";
   assignedTo?: string;
+  scheduledAt?: string;
   createdAt: string;
+}
+
+export interface NewCounselingPayload {
+  clientName: string;
+  phone?: string;
+  telegramId?: string;
+  concern: string;
+  description?: string;
+  preferredMethod: string;
+  preferredTime: string;
+  status?: "pending" | "assigned" | "scheduled" | "completed";
+  assignedTo?: string;
+  scheduledAt?: string;
 }
 
 export interface InnerHealingRecord {
