@@ -17,14 +17,14 @@ export function SegmentedRatioBar({ title, segments }: SegmentedRatioBarProps) {
   const total = segments.reduce((sum, s) => sum + s.percentage, 0);
 
   return (
-    <div className="bg-[#FEFDFE] rounded-2xl border border-[#28211D]/10 p-4 shadow-2xs space-y-3">
+    <div className="bg-white/90 rounded-2xl border border-black/[0.06] p-4 shadow-2xs space-y-3">
       {/* Title */}
-      <div className="text-xs font-semibold text-[#28211D] tracking-tight">
+      <div className="text-xs font-semibold text-[#202328] tracking-tight">
         {title}
       </div>
 
       {/* Segmented Solid Ratio Bar */}
-      <div className="w-full bg-[#28211D]/8 rounded-full h-3 overflow-hidden flex p-[1.5px] gap-0.5">
+      <div className="w-full bg-[#202328]/8 rounded-full h-3 overflow-hidden flex p-[1.5px] gap-0.5">
         {segments.map((seg, idx) => {
           const widthPct = total > 0 ? (seg.percentage / total) * 100 : 0;
           if (widthPct === 0) return null;
@@ -43,10 +43,10 @@ export function SegmentedRatioBar({ title, segments }: SegmentedRatioBarProps) {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-center">
         {segments.map((seg, idx) => (
           <div key={idx} className="space-y-0.5">
-            <div className="text-[11px] text-[#28211D]/60 truncate font-medium">
+            <div className="text-[11px] text-[#202328]/60 truncate font-medium">
               {seg.label}
             </div>
-            <div className="text-xs font-extrabold text-[#28211D]">
+            <div className="text-xs font-extrabold text-[#202328]">
               {seg.percentage.toFixed(1)}%
             </div>
           </div>

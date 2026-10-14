@@ -69,24 +69,25 @@ export function DemographicsSidebar({
   return (
     <aside
       id="demographics-sidebar"
-      className="w-full lg:w-[380px] xl:w-[420px] 2xl:w-[460px] shrink-0 bg-[#FEFDFE] border-b lg:border-b-0 lg:border-l border-[#28211D]/10 p-5 xl:p-6 space-y-5 h-full overflow-y-auto"
+      className="w-full lg:w-[380px] xl:w-[420px] 2xl:w-[460px] shrink-0 bg-white/80 backdrop-blur-md border-b lg:border-b-0 lg:border-l border-black/[0.08] p-5 xl:p-6 space-y-5 h-full overflow-y-auto"
     >
       {/* 1. REGION / LOCATION HEADER MATCHING SCREENSHOT */}
-      <div className="flex items-center justify-between pb-3 border-b border-[#28211D]/8">
+      <div className="flex items-center justify-between pb-3 border-b border-black/[0.06]">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-2xl bg-[#EDD338]/20 border border-[#A68D20]/30 flex items-center justify-center text-[#A68D20]">
+          <div className="w-8 h-8 rounded-2xl bg-[#F6CE46]/25 border border-[#F6CE46]/40 flex items-center justify-center text-[#202328]">
             <MapPin className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-[#28211D] tracking-tight flex items-center gap-1.5">
-              Ethiopia & Diaspora
+            <h2 className="text-sm font-bold text-[#202328] tracking-tight flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#F6CE46] shrink-0" />
+              <span>Ethiopia & Diaspora</span>
             </h2>
-            <p className="text-[11px] text-[#28211D]/60">Audience Demographics</p>
+            <p className="text-[11px] text-[#202328]/60">Audience Demographics</p>
           </div>
         </div>
         <Badge
           variant="outline"
-          className="text-[10px] bg-[#28211D]/5 border-[#28211D]/12 text-[#28211D] font-bold"
+          className="text-[10px] bg-[#202328]/5 border-black/[0.08] text-[#202328] font-bold"
         >
           {isLoading ? "..." : `${totalClients} Users`}
         </Badge>
@@ -241,9 +242,9 @@ export function DemographicsSidebar({
           />
 
           {/* 9. QUICK DEMOGRAPHIC FILTERS */}
-          <div className="pt-2 border-t border-[#28211D]/8 space-y-2">
-            <span className="font-semibold text-[#28211D] flex items-center gap-1.5 text-xs">
-              <Filter className="w-3.5 h-3.5 text-[#28211D]/60" />
+          <div className="pt-2 border-t border-black/[0.06] space-y-2">
+            <span className="font-semibold text-[#202328] flex items-center gap-1.5 text-xs">
+              <Filter className="w-3.5 h-3.5 text-[#202328]/60" />
               Quick Demographic Filter
             </span>
 
@@ -264,8 +265,8 @@ export function DemographicsSidebar({
                   }}
                   className={`px-2.5 py-1 text-[11px] rounded-2xl font-medium transition-colors cursor-pointer ${
                     clientFilter === btn.id
-                      ? "bg-[#EDD338] text-[#28211D] font-bold shadow-2xs"
-                      : "bg-[#28211D]/6 text-[#28211D] hover:bg-[#28211D]/12"
+                      ? "bg-[#F6CE46] text-[#202328] font-bold shadow-2xs"
+                      : "bg-[#202328]/5 text-[#202328] hover:bg-[#202328]/10"
                   }`}
                 >
                   {btn.label}

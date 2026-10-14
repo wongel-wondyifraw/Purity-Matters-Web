@@ -23,9 +23,9 @@ export function DemographicDonutCard({ title, segments }: DemographicDonutCardPr
   let accumulatedOffset = 0;
 
   return (
-    <div className="bg-[#FEFDFE] rounded-2xl border border-[#28211D]/10 p-4 shadow-2xs space-y-3">
+    <div className="bg-white/90 rounded-2xl border border-black/[0.06] p-4 shadow-2xs space-y-3">
       {/* Title */}
-      <div className="text-xs font-semibold text-[#28211D] tracking-tight">
+      <div className="text-xs font-semibold text-[#202328] tracking-tight">
         {title}
       </div>
 
@@ -36,9 +36,9 @@ export function DemographicDonutCard({ title, segments }: DemographicDonutCardPr
             <div key={idx} className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 truncate">
                 <span className={`w-3 h-3 rounded-2xl shrink-0 ${seg.bgClass}`} />
-                <span className="text-[11px] font-medium text-[#28211D]/70 truncate">{seg.label}</span>
+                <span className="text-[11px] font-medium text-[#202328]/70 truncate">{seg.label}</span>
               </div>
-              <span className="text-xs font-bold text-[#28211D]">
+              <span className="text-xs font-bold text-[#202328]">
                 {seg.percentage.toFixed(0)}%
               </span>
             </div>

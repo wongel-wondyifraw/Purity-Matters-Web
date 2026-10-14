@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { ToastProvider } from "@/components/ui/toast";
+import { AuthProvider } from "@/context/AuthContext";
+import { AdminDataProvider } from "@/context/AdminDataContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -21,10 +24,16 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} h-full antialiased`}
+      className={`${inter.variable} h-full antialiased overflow-hidden bg-[#EBECEF]`}
     >
-      <body className={`${inter.className} min-h-full bg-[var(--color-porcelain)] text-[var(--color-shadow-grey)] flex flex-col font-sans selection:bg-[#EDD338] selection:text-[#28211D]`}>
-        {children}
+      <body className={`${inter.className} h-full max-h-screen text-[#202328] flex flex-col font-sans overflow-hidden bg-[#EBECEF] selection:bg-[#F6CE46] selection:text-[#202328]`}>
+        <ToastProvider>
+          <AuthProvider>
+            <AdminDataProvider>
+              {children}
+            </AdminDataProvider>
+          </AuthProvider>
+        </ToastProvider>
       </body>
     </html>
   );

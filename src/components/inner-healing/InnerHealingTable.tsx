@@ -1,0 +1,175 @@
+"use client";
+
+import React from "react";
+import { Sparkles, RefreshCw } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useAdminData } from "@/context/AdminDataContext";
+
+export function InnerHealingTable() {
+  const { innerHealingRequests, isLoading, updateInnerHealingStatus } =
+    useAdminData();
+
+  return (
+    <Card className="flex-1 flex flex-col min-h-0 h-full bg-white/90 backdrop-blur-md border border-black/[0.06] rounded-2xl shadow-2xs overflow-hidden">
+      <CardHeader className="shrink-0 border-b border-black/[0.06] pb-4">
+        <CardTitle className="text-lg font-bold text-[#202328] tracking-tight flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-[#F6CE46] shrink-0" />
+          <span>Inner Healing Ministry Queue</span>
+        </CardTitle>
+        <CardDescription className="text-xs text-neutral-500 font-normal mt-0.5">
+          Requests submitted by clients for specialized emotional and spiritual
+          restoration.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col min-h-0 pt-4 p-4 overflow-hidden">
+        {/* Scrollable table container with sticky header */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden border border-black/[0.06] rounded-2xl bg-white/50 shadow-2xs">
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-neutral-100/95 backdrop-blur-xs shadow-2xs">
+                <TableRow className="border-b border-black/[0.06] hover:bg-transparent">
+                <TableHead className="text-[#202328] font-bold text-xs py-3 px-4">
+                  Reference
+                </TableHead>
+                <TableHead className="text-[#202328] font-bold text-xs py-3">
+                  Client
+                </TableHead>
+                <TableHead className="text-[#202328] font-bold text-xs py-3">
+                  Target Focus Topic
+                </TableHead>
+                <TableHead className="text-[#202328] font-bold text-xs py-3">
+                  Requested At
+                </TableHead>
+                <TableHead className="text-[#202328] font-bold text-xs py-3">
+                  Status
+                </TableHead>
+                <TableHead className="text-[#202328] font-bold text-xs py-3 text-right px-4">
+                  Actions
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="text-center py-12 text-neutral-500 text-xs"
+                  >
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <RefreshCw className="w-5 h-5 animate-spin text-[#202328]" />
+                      <span className="font-medium">Loading inner healing requests...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : innerHealingRequests.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="text-center py-12 text-neutral-500 text-sm"
+                  >
+                    <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
+                      <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-400">
+                        <Sparkles className="w-5 h-5" />
+                      </div>
+                      <p className="font-semibold text-[#202328] text-sm">
+                        No Inner Healing Requests
+                      </p>
+                      <p className="text-xs text-neutral-500">
+                        Clients submitting prayer & inner healing requests via the bot will
+                        appear here.
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                innerHealingRequests.map((item) => (
+                  <TableRow
+                    key={item.id}
+                    className="border-b border-black/[0.04] hover:bg-black/[0.02] transition-colors"
+                  >
+                    <TableCell className="px-4">
+                      <span className="text-[#202328] font-bold text-xs bg-[#F6CE46]/20 border border-[#F6CE46]/40 rounded-full px-2.5 py-1 font-mono">
+                        {item.referenceNumber}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-bold text-[#202328] text-sm">
+                        {item.clientName}
+                      </div>
+                      <div className="text-xs text-neutral-400 font-medium">
+                        {item.phone}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="border border-black/10 text-xs bg-white text-[#202328] font-semibold px-2.5 py-1 rounded-full shadow-2xs">
+                        {item.topic}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-neutral-500 text-xs font-medium">
+                      {item.createdAt}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full shadow-2xs ${
+                          item.status === "pending"
+                            ? "bg-neutral-100 text-neutral-600 border border-black/10"
+                            : item.status === "contacted"
+                            ? "bg-[#202328] text-white border border-[#202328]"
+                            : "bg-[#F6CE46]/30 text-[#202328] font-bold border border-[#F6CE46]/50"
+                        }`}
+                      >
+                        {item.status.toUpperCase()}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right px-4 space-x-2">
+                      {item.status === "pending" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs border-black/15 bg-white text-[#202328] hover:bg-neutral-50 rounded-full px-3.5 py-1.5 cursor-pointer shadow-2xs font-semibold"
+                          onClick={() => updateInnerHealingStatus(item.id, "contacted")}
+                        >
+                          Mark Contacted
+                        </Button>
+                      )}
+                      {item.status === "contacted" && (
+                        <Button
+                          size="sm"
+                          className="text-xs bg-[#202328] hover:bg-black text-white rounded-full px-3.5 py-1.5 cursor-pointer shadow-2xs font-semibold border-0"
+                          onClick={() => updateInnerHealingStatus(item.id, "completed")}
+                        >
+                          Mark Completed
+                        </Button>
+                      )}
+                      {item.status === "completed" && (
+                        <span className="text-[#202328] font-bold text-xs bg-[#F6CE46]/30 border border-[#F6CE46]/50 rounded-full px-3 py-1">
+                          Done
+                        </span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
