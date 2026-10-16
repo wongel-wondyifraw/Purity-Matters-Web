@@ -6,15 +6,6 @@ const nextConfig: NextConfig = {
   experimental: {
     cpus: 1,
   },
-  turbopack: {
-    root: process.cwd(),
-    rules: {
-      "*.css": {
-        loaders: ["@tailwindcss/turbopack"],
-        as: "*.css",
-      },
-    },
-  },
 };
 
 export default nextConfig;
