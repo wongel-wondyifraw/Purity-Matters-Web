@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "next build && node scripts/copy-static.mjs",
-    "build:webpack": "next build --webpack && node scripts/copy-static.mjs",
+    "build": "node scripts/copy-static.mjs --clean && next build && node scripts/copy-static.mjs",
+    "build:webpack": "node scripts/copy-static.mjs --clean && next build --webpack && node scripts/copy-static.mjs",
     "start": "next start -p 3000",
     "lint": "eslint"
   },

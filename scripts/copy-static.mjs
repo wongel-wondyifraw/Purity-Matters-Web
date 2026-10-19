@@ -3,15 +3,27 @@ import path from 'node:path';
 
 const srcDir = path.resolve('.next', 'static');
 const destDir = path.resolve('public', '_next', 'static');
+const publicNextDir = path.resolve('public', '_next');
 
-try {
-  if (fs.existsSync(srcDir)) {
-    fs.mkdirSync(destDir, { recursive: true });
-    fs.cpSync(srcDir, destDir, { recursive: true, force: true });
-    console.log('✓ Successfully copied .next/static to public/_next/static for cPanel/LiteSpeed static serving.');
-  } else {
-    console.warn('⚠️ .next/static not found; build may not have completed yet.');
+if (process.argv.includes('--clean')) {
+  try {
+    if (fs.existsSync(publicNextDir)) {
+      fs.rmSync(publicNextDir, { recursive: true, force: true });
+      console.log('✓ Cleaned public/_next before build.');
+    }
+  } catch (err) {
+    console.warn('Could not clean public/_next:', err);
   }
-} catch (error) {
-  console.error('Failed to copy static assets to public/_next/static:', error);
+} else {
+  try {
+    if (fs.existsSync(srcDir)) {
+      fs.mkdirSync(destDir, { recursive: true });
+      fs.cpSync(srcDir, destDir, { recursive: true, force: true });
+      console.log('✓ Successfully copied .next/static to public/_next/static for cPanel/LiteSpeed static serving.');
+    } else {
+      console.warn('⚠️ .next/static not found; build may not have completed yet.');
+    }
+  } catch (error) {
+    console.error('Failed to copy static assets to public/_next/static:', error);
+  }
 }
