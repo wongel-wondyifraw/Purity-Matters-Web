@@ -50,10 +50,11 @@ export function UsersManagement() {
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
 
-  const apiUrl =
+  const apiUrl = (
     process.env.NEXT_PUBLIC_API_URL ||
     process.env.NEXT_PUBLIC_API ||
-    "http://localhost:3001";
+    "http://localhost:3001"
+  ).replace(/\/+$/, "");
 
   const [users, setUsers] = useState<ConsoleUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);

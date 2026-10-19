@@ -23,9 +23,11 @@ export interface NewClientPayload {
 }
 
 export const getApiUrl = () =>
-  process.env.NEXT_PUBLIC_API_URL ||
-  process.env.NEXT_PUBLIC_API ||
-  "http://localhost:3001";
+  (
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_API ||
+    "http://localhost:3001"
+  ).replace(/\/+$/, "");
 
 export const getAuthToken = () =>
   typeof window !== "undefined"
