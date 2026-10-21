@@ -249,13 +249,13 @@ export function AnonymousQuestionsTable() {
                             <DialogTrigger className="inline-flex items-center justify-center rounded-full text-xs font-semibold transition-all bg-[#202328] hover:bg-black text-white h-7 px-3.5 shadow-2xs cursor-pointer border-0">
                               {q.status === "answered" ? "View / Edit" : "Respond"}
                             </DialogTrigger>
-                            <DialogContent className="max-w-lg bg-white rounded-2xl border border-black/10 max-h-[88vh] flex flex-col overflow-hidden">
+                            <DialogContent className="max-w-lg bg-white rounded-2xl border border-black/10 max-h-[88vh] p-6 sm:p-7 flex flex-col overflow-hidden">
                               {/* Top-Right 1/4th Quadrant Watermark Icon under Close button */}
-                              <div className="absolute -top-18 -right-18 pointer-events-none select-none text-black/[0.05] z-0">
-                                <HelpCircle className="w-36 h-36" strokeWidth={1.2} />
+                              <div className="absolute -top-16 -right-16 pointer-events-none select-none text-black/[0.03] z-0">
+                                <HelpCircle className="w-36 h-36" strokeWidth={1} />
                               </div>
 
-                              <DialogHeader className="relative z-10 shrink-0">
+                              <DialogHeader className="relative z-10 shrink-0 pb-3 border-b border-black/[0.06]">
                                 <div className="flex items-center gap-2">
                                   <span className="bg-[#202328] text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full">
                                     {q.referenceNumber}
@@ -268,12 +268,12 @@ export function AnonymousQuestionsTable() {
                                   <span className="w-2 h-2 rounded-full bg-[#F6CE46] shrink-0" />
                                   <span>Anonymous Inquirer Question</span>
                                 </DialogTitle>
-                                <DialogDescription className="text-xs text-neutral-500">
+                                <DialogDescription className="text-xs text-neutral-500 mt-0.5">
                                   Submitted {q.submittedAt}. The sender's identity is strictly anonymous.
                                 </DialogDescription>
                               </DialogHeader>
 
-                              <div className="space-y-4 py-2 flex-1 min-h-0 overflow-y-auto pr-1">
+                              <div className="space-y-4 py-3 flex-1 min-h-0 overflow-y-auto pr-1">
                                 {/* Question display */}
                                 <div className="p-3.5 bg-neutral-50 border border-black/[0.08] rounded-xl text-xs text-[#202328] leading-relaxed">
                                   <p className="font-semibold text-neutral-500 text-[11px] mb-1 flex items-center gap-1.5">

@@ -198,22 +198,22 @@ export function CounselingTable() {
                         <DialogTrigger className="inline-flex items-center justify-center rounded-full text-xs font-semibold transition-all bg-[#202328] hover:bg-black text-white h-7 px-3.5 shadow-2xs cursor-pointer">
                           Manage
                         </DialogTrigger>
-                        <DialogContent className="bg-white border border-black/[0.08] text-[#202328] max-w-md shadow-xl rounded-2xl max-h-[88vh] flex flex-col overflow-hidden">
+                        <DialogContent className="bg-white border border-black/[0.08] text-[#202328] max-w-md shadow-xl rounded-2xl max-h-[88vh] p-6 sm:p-7 flex flex-col overflow-hidden">
                           {/* Top-Right 1/4th Quadrant Watermark Icon under Close button */}
-                          <div className="absolute -top-18 -right-18 pointer-events-none select-none text-black/[0.05] z-0">
-                            <HeartHandshake className="w-36 h-36" strokeWidth={1.2} />
+                          <div className="absolute -top-16 -right-16 pointer-events-none select-none text-black/[0.03] z-0">
+                            <HeartHandshake className="w-36 h-36" strokeWidth={1} />
                           </div>
 
-                          <DialogHeader className="relative z-10 shrink-0">
+                          <DialogHeader className="relative z-10 shrink-0 pb-3 border-b border-black/[0.06]">
                             <DialogTitle className="text-[#202328] font-bold flex items-center gap-2">
                               <span className="w-2 h-2 rounded-full bg-[#F6CE46] shrink-0" />
                               <span>Manage Request {item.referenceNumber}</span>
                             </DialogTitle>
-                            <DialogDescription className="text-neutral-500 text-xs">
+                            <DialogDescription className="text-neutral-500 text-xs mt-0.5">
                               Client: {item.clientName} ({item.phone})
                             </DialogDescription>
                           </DialogHeader>
-                          <div className="space-y-4 py-2 flex-1 min-h-0 overflow-y-auto pr-1">
+                          <div className="space-y-4 py-3 flex-1 min-h-0 overflow-y-auto pr-1">
                             <div className="p-3 bg-neutral-50/80 border border-black/[0.06] rounded-2xl text-xs space-y-1">
                               <p className="text-neutral-500 font-bold uppercase tracking-wider text-[10px]">
                                 DESCRIPTION FROM CLIENT:

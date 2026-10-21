@@ -21,32 +21,35 @@ export function AppHero() {
       className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 pb-1 shrink-0"
     >
       {/* Left Side: Welcome Headline & 4-Capsule Segmented Bar */}
-      <div className="space-y-2.5">
-        <h1 className="text-3xl sm:text-4xl font-normal tracking-tight text-[#202328]">
+      <div className="space-y-2">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-normal tracking-tight text-[#202328]">
           {timeGreeting}, {displayName}
         </h1>
 
-        {/* Segmented 4-Capsule Bar Exactly Matching Reference Layout */}
-        <div id="crextio-segmented-bar" className="flex items-center gap-1.5 pt-1">
+        {/* Segmented 4-Capsule Bar with mobile scroll support */}
+        <div
+          id="crextio-segmented-bar"
+          className="flex items-center gap-1.5 pt-1 overflow-x-auto no-scrollbar max-w-full pb-0.5"
+        >
           <div
-            className="h-9 px-4 rounded-full bg-[#202328] text-white flex items-center justify-between text-xs font-semibold shadow-xs"
-            style={{ width: "175px" }}
+            className="h-8 sm:h-9 px-3 sm:px-4 rounded-full bg-[#202328] text-white flex items-center justify-between text-xs font-semibold shadow-xs shrink-0"
+            style={{ width: "160px" }}
           >
             <span>Active</span>
             <span className="text-[#F6CE46]">58%</span>
           </div>
 
           <div
-            className="h-9 px-4 rounded-full bg-[#F6CE46] text-[#202328] flex items-center justify-between text-xs font-bold shadow-xs"
-            style={{ width: "125px" }}
+            className="h-8 sm:h-9 px-3 sm:px-4 rounded-full bg-[#F6CE46] text-[#202328] flex items-center justify-between text-xs font-bold shadow-xs shrink-0"
+            style={{ width: "120px" }}
           >
             <span>In Queue</span>
             <span>26%</span>
           </div>
 
           <div
-            className="h-9 px-4 rounded-full bg-white text-[#202328] flex items-center justify-between text-xs font-bold shadow-xs border border-black/10"
-            style={{ width: "95px" }}
+            className="h-8 sm:h-9 px-3 sm:px-4 rounded-full bg-white text-[#202328] flex items-center justify-between text-xs font-bold shadow-xs border border-black/10 shrink-0"
+            style={{ width: "90px" }}
           >
             <span>Done</span>
             <span>16%</span>
@@ -57,7 +60,7 @@ export function AppHero() {
       {/* Right Side: 3 Giant Stationary Metric Numbers */}
       <div
         id="crextio-stationary-kpis"
-        className="flex items-center gap-6 sm:gap-9 xl:gap-11 pt-2 xl:pt-0"
+        className="flex items-center gap-4 sm:gap-8 xl:gap-11 pt-1 xl:pt-0 overflow-x-auto no-scrollbar"
       >
         {/* KPI 1: Clients */}
         <div className="flex items-start gap-2.5">

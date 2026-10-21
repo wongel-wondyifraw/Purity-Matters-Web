@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, LogOut, ChevronDown, ShieldCheck, Mail } from "lucide-react";
+import { Bell, LogOut, ChevronDown, ShieldCheck, Mail, PieChart } from "lucide-react";
 import { useAdminData } from "@/context/AdminDataContext";
 import { useAuth } from "@/context/AuthContext";
 
@@ -11,6 +11,10 @@ interface NavItem {
   label: string;
   href: string;
   description: string;
+}
+
+interface AppHeaderProps {
+  onOpenDemographics?: () => void;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -24,7 +28,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Users", href: "/users", description: "Console Users & Access Management" },
 ];
 
-export function AppHeader() {
+export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
   const pathname = usePathname();
   const { syncWithRemoteBackend, isRefreshing } = useAdminData();
   const { user, logout, getInitials } = useAuth();
@@ -106,8 +110,22 @@ export function AppHeader() {
           })}
         </nav>
 
-        {/* Right: Notifications, User Profile Pill */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        {/* Right: Quick Demographics (mobile), Notifications, User Profile Pill */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          {onOpenDemographics && (
+            <button
+              type="button"
+              id="mobile-header-demographics-btn"
+              onClick={onOpenDemographics}
+              aria-label="View Demographics"
+              title="Audience Demographics"
+              className="lg:hidden w-8 h-8 rounded-full border border-black/15 bg-white/80 hover:bg-white text-[#202328] flex items-center justify-center transition-all cursor-pointer relative shadow-2xs"
+            >
+              <PieChart className="w-3.5 h-3.5 text-neutral-700" />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#F6CE46]" />
+            </button>
+          )}
+
           <button
             type="button"
             aria-label="Notifications"

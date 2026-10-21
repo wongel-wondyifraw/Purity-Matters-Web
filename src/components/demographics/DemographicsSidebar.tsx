@@ -36,6 +36,7 @@ interface DemographicsSidebarProps {
   clientFilter: string;
   onFilterChange: (filter: string) => void;
   onSelectTab: (tab: string) => void;
+  className?: string;
 }
 
 export function DemographicsSidebar({
@@ -58,6 +59,7 @@ export function DemographicsSidebar({
   clientFilter,
   onFilterChange,
   onSelectTab,
+  className,
 }: DemographicsSidebarProps) {
   const calcPct = (val: number) =>
     totalClients > 0 ? Math.round((val / totalClients) * 100) : 0;
@@ -69,7 +71,10 @@ export function DemographicsSidebar({
   return (
     <aside
       id="demographics-sidebar"
-      className="w-full lg:w-[380px] xl:w-[420px] 2xl:w-[460px] shrink-0 bg-white/80 backdrop-blur-md border-b lg:border-b-0 lg:border-l border-black/[0.08] p-5 xl:p-6 space-y-5 h-full overflow-y-auto"
+      className={
+        className ||
+        "hidden lg:block w-full lg:w-[380px] xl:w-[420px] 2xl:w-[460px] shrink-0 bg-white/80 backdrop-blur-md border-b lg:border-b-0 lg:border-l border-black/[0.08] p-5 xl:p-6 space-y-5 h-full overflow-y-auto"
+      }
     >
       {/* 1. REGION / LOCATION HEADER MATCHING SCREENSHOT */}
       <div className="flex items-center justify-between pb-3 border-b border-black/[0.06]">
