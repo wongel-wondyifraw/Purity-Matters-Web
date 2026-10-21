@@ -18,9 +18,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAdminData } from "@/context/AdminDataContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function CoursesTable() {
-  const { courseProgressList, isLoading } = useAdminData();
+  const { courseProgressList, isCoursesLoading } = useAdminData();
 
   return (
     <Card className="flex-1 flex flex-col min-h-0 h-full bg-white/90 backdrop-blur-md border border-black/[0.06] rounded-2xl shadow-2xs overflow-hidden">
@@ -61,18 +62,17 @@ export function CoursesTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="text-center py-12 text-neutral-500 text-xs"
-                  >
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <RefreshCw className="w-5 h-5 animate-spin text-[#202328]" />
-                      <span className="font-medium">Loading course journeys...</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
+              {isCoursesLoading ? (
+                Array.from({ length: 5 }).map((_, idx) => (
+                  <TableRow key={`crs-skel-${idx}`} className="border-b border-black/[0.04]">
+                    <TableCell className="px-4 py-3"><Skeleton className="h-4 w-28" /></TableCell>
+                    <TableCell><Skeleton className="h-3.5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-44 rounded-full" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24 rounded-full" /></TableCell>
+                    <TableCell className="px-4"><Skeleton className="h-3.5 w-20" /></TableCell>
+                  </TableRow>
+                ))
               ) : courseProgressList.length === 0 ? (
                 <TableRow>
                   <TableCell

@@ -27,13 +27,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAdminData } from "@/context/AdminDataContext";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AddCounselingModal } from "./AddCounselingModal";
 import { SearchableCounselorSelect } from "./SearchableCounselorSelect";
 
 export function CounselingTable() {
   const {
     counselingRequests,
-    isLoading,
+    isCounselingLoading,
     counselingFilter,
     setCounselingFilter,
     updateCounselingStatus,
@@ -109,18 +110,23 @@ export function CounselingTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="text-center py-12 text-neutral-500 text-xs"
-                  >
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <RefreshCw className="w-5 h-5 animate-spin text-[#202328]" />
-                      <span className="font-medium">Loading counselling requests...</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
+              {isCounselingLoading ? (
+                Array.from({ length: 5 }).map((_, idx) => (
+                  <TableRow key={`cn-skel-${idx}`} className="border-b border-black/[0.04]">
+                    <TableCell className="px-4 py-3"><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-2.5 w-24" />
+                      </div>
+                    </TableCell>
+                    <TableCell><Skeleton className="h-5 w-28 rounded-full" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell className="text-right px-4"><Skeleton className="h-7 w-20 rounded-full ml-auto" /></TableCell>
+                  </TableRow>
+                ))
               ) : filteredCounseling.length === 0 ? (
                 <TableRow>
                   <TableCell

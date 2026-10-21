@@ -24,11 +24,6 @@ import {
 import { ConsoleUser } from "@/types/auth";
 import { useToast } from "@/components/ui/toast";
 import {
-  INITIAL_ANONYMOUS_QUESTIONS,
-  INITIAL_RESOURCE_CATALOG,
-  INITIAL_PHYSICAL_BOOK_ORDERS,
-} from "@/lib/mockData";
-import {
   getApiUrl,
   fetchClientsApi,
   fetchCounselingApi,
@@ -73,6 +68,13 @@ export interface AdminDataContextType {
   apiUrl: string;
   isRefreshing: boolean;
   isLoading: boolean;
+  isClientsLoading: boolean;
+  isCounselingLoading: boolean;
+  isInnerHealingLoading: boolean;
+  isCoursesLoading: boolean;
+  isCatalogLoading: boolean;
+  isOrdersLoading: boolean;
+  isQuestionsLoading: boolean;
 
   // Filter State
   clientFilter: string;
@@ -118,6 +120,7 @@ export interface AdminDataContextType {
     status: InnerHealingRecord["status"]
   ) => Promise<void>;
   answerAnonymousQuestion: (id: number, answerText: string, assignedCounselor?: string) => Promise<void>;
+  deleteAnonymousQuestion: (id: number) => Promise<boolean>;
   addResource: (payload: NewResourcePayload) => Promise<boolean>;
   updateResource: (
     id: number,
@@ -192,20 +195,30 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     queryFn: fetchAnonymousQuestionsApi,
   });
 
-  const isLoading = clientsQuery.isLoading || counselingQuery.isLoading;
+  const isClientsLoading = clientsQuery.isLoading;
+  const isCounselingLoading = counselingQuery.isLoading;
+  const isInnerHealingLoading = innerHealingQuery.isLoading;
+  const isCoursesLoading = coursesQuery.isLoading;
+  const isCatalogLoading = catalogQuery.isLoading;
+  const isOrdersLoading = ordersQuery.isLoading;
+  const isQuestionsLoading = questionsQuery.isLoading;
+
+  const isLoading =
+    isClientsLoading ||
+    isCounselingLoading ||
+    isCatalogLoading ||
+    isOrdersLoading ||
+    isQuestionsLoading;
 
   const clients = useMemo(() => clientsQuery.data || [], [clientsQuery.data]);
   const counselingRequests = useMemo(() => counselingQuery.data || [], [counselingQuery.data]);
   const innerHealingRequests = useMemo(() => innerHealingQuery.data || [], [innerHealingQuery.data]);
   const courseProgressList = useMemo(() => coursesQuery.data || [], [coursesQuery.data]);
   const resourceSales = useMemo(() => resourceSalesQuery.data || [], [resourceSalesQuery.data]);
-  const resourceCatalog = useMemo(() => catalogQuery.data || INITIAL_RESOURCE_CATALOG, [catalogQuery.data]);
-  const physicalBookOrders = useMemo(() => ordersQuery.data || INITIAL_PHYSICAL_BOOK_ORDERS, [ordersQuery.data]);
+  const resourceCatalog = useMemo(() => catalogQuery.data || [], [catalogQuery.data]);
+  const physicalBookOrders = useMemo(() => ordersQuery.data || [], [ordersQuery.data]);
   const systemUsers = useMemo(() => usersQuery.data || [], [usersQuery.data]);
-  const anonymousQuestions = useMemo(
-    () => (questionsQuery.data && questionsQuery.data.length > 0 ? questionsQuery.data : INITIAL_ANONYMOUS_QUESTIONS),
-    [questionsQuery.data]
-  );
+  const anonymousQuestions = useMemo(() => questionsQuery.data || [], [questionsQuery.data]);
 
   // =================== MUTATIONS ===================
 
@@ -441,6 +454,23 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  const deleteQuestionMutation = useMutation({
+    mutationFn: deleteAnonymousQuestionApi,
+    onSuccess: (_, id) => {
+      queryClient.setQueryData<AnonymousQuestionRecord[]>(["admin", "questions"], (old = []) =>
+        old.filter((q) => q.id !== id)
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin", "questions"] });
+      toast.success(
+        "Question Deleted",
+        `Anonymous question #${id} permanently deleted.`
+      );
+    },
+    onError: (err: any) => {
+      toast.error("Delete Failed", err.message || "Failed to delete question.");
+    },
+  });
+
   // =================== WRAPPER ACTION HANDLERS ===================
 
   const syncWithRemoteBackend = useCallback(
@@ -600,6 +630,18 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     [answerQuestionMutation]
   );
 
+  const deleteAnonymousQuestion = useCallback(
+    async (id: number): Promise<boolean> => {
+      try {
+        await deleteQuestionMutation.mutateAsync(id);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [deleteQuestionMutation]
+  );
+
   const copyToClipboard = useCallback(
     (text: string, idKey: string) => {
       navigator.clipboard?.writeText(text);
@@ -742,6 +784,13 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       apiUrl,
       isRefreshing,
       isLoading,
+      isClientsLoading,
+      isCounselingLoading,
+      isInnerHealingLoading,
+      isCoursesLoading,
+      isCatalogLoading,
+      isOrdersLoading,
+      isQuestionsLoading,
       clientFilter,
       setClientFilter,
       counselingFilter,
@@ -772,6 +821,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       deleteCounselingRequest,
       updateInnerHealingStatus,
       answerAnonymousQuestion,
+      deleteAnonymousQuestion,
       addResource,
       updateResource,
       updatePhysicalOrderStatus,
@@ -791,6 +841,13 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       apiUrl,
       isRefreshing,
       isLoading,
+      isClientsLoading,
+      isCounselingLoading,
+      isInnerHealingLoading,
+      isCoursesLoading,
+      isCatalogLoading,
+      isOrdersLoading,
+      isQuestionsLoading,
       clientFilter,
       counselingFilter,
       copiedId,
@@ -819,6 +876,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       deleteCounselingRequest,
       updateInnerHealingStatus,
       answerAnonymousQuestion,
+      deleteAnonymousQuestion,
       addResource,
       updateResource,
       updatePhysicalOrderStatus,

@@ -331,7 +331,7 @@ export async function deleteClientApi(id: number): Promise<void> {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
-  if (!res.ok) throw new Error(`Failed to delete client #${id}`);
+  if (!res.ok && res.status !== 404) throw new Error(`Failed to delete client #${id}`);
 }
 
 export async function createCounselingApi(payload: NewCounselingPayload): Promise<CounselingRecord> {
@@ -384,7 +384,7 @@ export async function deleteCounselingApi(id: number): Promise<void> {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
-  if (!res.ok) throw new Error(`Failed to delete counseling request #${id}`);
+  if (!res.ok && res.status !== 404) throw new Error(`Failed to delete counseling request #${id}`);
 }
 
 export async function updateInnerHealingStatusApi(
@@ -515,7 +515,10 @@ export async function deleteResourceApi(id: number): Promise<void> {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
-  if (!res.ok) throw new Error(`Failed to delete resource #${id}`);
+  // If the resource is already gone or does not exist on server (404), treat as successfully removed from UI
+  if (!res.ok && res.status !== 404) {
+    throw new Error(`Failed to delete resource #${id}`);
+  }
 }
 
 export async function updatePhysicalOrderStatusApi(
@@ -569,5 +572,5 @@ export async function deleteAnonymousQuestionApi(id: number): Promise<void> {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
-  if (!res.ok) throw new Error(`Failed to delete question #${id}`);
+  if (!res.ok && res.status !== 404) throw new Error(`Failed to delete question #${id}`);
 }

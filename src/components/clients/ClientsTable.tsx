@@ -41,13 +41,14 @@ import { useAdminData } from "@/context/AdminDataContext";
 import { ClientRegistrationModal } from "@/components/clients/ClientRegistrationModal";
 import { EditClientModal } from "@/components/clients/EditClientModal";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ClientRecord } from "@/types/admin";
 
 export function ClientsTable() {
   const {
     clients,
     deleteClient,
-    isLoading,
+    isClientsLoading,
     clientFilter,
     setClientFilter,
     exportClientsCsv,
@@ -183,15 +184,28 @@ export function ClientsTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12 text-neutral-500 text-xs">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <RefreshCw className="w-5 h-5 animate-spin text-[#202328]" />
-                        <span className="font-medium">Loading client records...</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                {isClientsLoading ? (
+                  Array.from({ length: 5 }).map((_, idx) => (
+                    <TableRow key={`cli-skel-${idx}`} className="border-b border-black/[0.04]">
+                      <TableCell className="px-4 py-3"><Skeleton className="h-4 w-24 rounded-md" /></TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <Skeleton className="h-3.5 w-36" />
+                          <Skeleton className="h-2.5 w-24" />
+                        </div>
+                      </TableCell>
+                      <TableCell><Skeleton className="h-3.5 w-28" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-18 rounded-full" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+                      <TableCell><Skeleton className="h-3.5 w-20" /></TableCell>
+                      <TableCell className="text-right px-4">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Skeleton className="w-7 h-7 rounded-full" />
+                          <Skeleton className="w-7 h-7 rounded-full" />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 ) : filteredClients.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-12 text-neutral-500 text-sm">

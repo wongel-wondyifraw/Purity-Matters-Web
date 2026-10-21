@@ -39,6 +39,7 @@ import { useAdminData } from "@/context/AdminDataContext";
 import { AddResourceModal } from "@/components/resources/AddResourceModal";
 import { EditResourceModal } from "@/components/resources/EditResourceModal";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PhysicalBookOrderItem, ResourceCatalogItem } from "@/types/admin";
 
 export function ResourcesTable() {
@@ -47,7 +48,8 @@ export function ResourcesTable() {
     physicalBookOrders,
     updatePhysicalOrderStatus,
     deleteResource,
-    isLoading,
+    isCatalogLoading,
+    isOrdersLoading,
     apiUrl,
   } = useAdminData();
 
@@ -246,15 +248,31 @@ export function ResourcesTable() {
                 </TableHeader>
 
                 <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-16 text-neutral-500 text-xs">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <RefreshCw className="w-5 h-5 animate-spin text-[#202328]" />
-                          <span className="font-medium">Loading catalog items...</span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                  {isCatalogLoading ? (
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <TableRow key={`cat-skel-${idx}`} className="border-b border-black/[0.04]">
+                        <TableCell className="px-4 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <Skeleton className="w-8 h-8 rounded-lg shrink-0" />
+                            <div className="space-y-1.5 flex-1 min-w-0">
+                              <Skeleton className="h-3.5 w-44" />
+                              <Skeleton className="h-2.5 w-24" />
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-28 rounded-full" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-14" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell className="text-right px-4">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Skeleton className="w-7 h-7 rounded-full" />
+                            <Skeleton className="w-7 h-7 rounded-full" />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
                   ) : filteredCatalog.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-16 text-neutral-500 text-sm">
@@ -425,15 +443,28 @@ export function ResourcesTable() {
                 </TableHeader>
 
                 <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-16 text-neutral-500 text-xs">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <RefreshCw className="w-5 h-5 animate-spin text-[#202328]" />
-                          <span className="font-medium">Loading physical orders...</span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                  {isOrdersLoading ? (
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <TableRow key={`ord-skel-${idx}`} className="border-b border-black/[0.04]">
+                        <TableCell className="px-4 py-3"><Skeleton className="h-5 w-24 rounded-md" /></TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <Skeleton className="h-3.5 w-40" />
+                            <Skeleton className="h-2.5 w-24" />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <Skeleton className="h-3.5 w-28" />
+                            <Skeleton className="h-2.5 w-20" />
+                          </div>
+                        </TableCell>
+                        <TableCell><Skeleton className="h-3.5 w-44" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+                        <TableCell className="px-4"><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
+                      </TableRow>
+                    ))
                   ) : filteredOrders.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-16 text-neutral-500 text-sm">

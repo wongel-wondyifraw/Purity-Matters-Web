@@ -8,6 +8,7 @@ import {
   Clock,
   Send,
   ShieldAlert,
+  Trash2,
 } from "lucide-react";
 import {
   Card,
@@ -34,18 +35,29 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { useAdminData } from "@/context/AdminDataContext";
 import { useAuth } from "@/context/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AnonymousQuestionRecord } from "@/types/admin";
 
 export function AnonymousQuestionsTable() {
-  const { anonymousQuestions, answerAnonymousQuestion } = useAdminData();
+  const {
+    anonymousQuestions,
+    answerAnonymousQuestion,
+    deleteAnonymousQuestion,
+    isQuestionsLoading,
+  } = useAdminData();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedQuestion, setSelectedQuestion] =
     useState<AnonymousQuestionRecord | null>(null);
   const [answerDraft, setAnswerDraft] = useState<string>("");
+  const [questionToDelete, setQuestionToDelete] =
+    useState<AnonymousQuestionRecord | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const counselorName = useMemo(() => {
     if (!user) return "Admin Pastoral Care";
@@ -148,7 +160,23 @@ export function AnonymousQuestionsTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredQuestions.length === 0 ? (
+                {isQuestionsLoading ? (
+                  Array.from({ length: 5 }).map((_, idx) => (
+                    <TableRow key={`aq-skel-${idx}`} className="border-b border-black/[0.04]">
+                      <TableCell className="px-4 py-3"><Skeleton className="h-4 w-16 rounded-md" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-28 rounded-full" /></TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <Skeleton className="h-3.5 w-72" />
+                          <Skeleton className="h-2.5 w-40" />
+                        </div>
+                      </TableCell>
+                      <TableCell><Skeleton className="h-3.5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-18 rounded-full" /></TableCell>
+                      <TableCell className="text-right px-4"><Skeleton className="h-6 w-16 rounded-full ml-auto" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : filteredQuestions.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={6}
@@ -210,97 +238,111 @@ export function AnonymousQuestionsTable() {
                         )}
                       </TableCell>
                       <TableCell className="text-right px-4">
-                        <Dialog
-                          open={selectedQuestion?.id === q.id}
-                          onOpenChange={(isOpen) => {
-                            if (isOpen) handleOpenAnswer(q);
-                            else setSelectedQuestion(null);
-                          }}
-                        >
-                          <DialogTrigger className="inline-flex items-center justify-center rounded-full text-xs font-semibold transition-all bg-[#202328] hover:bg-black text-white h-7 px-3.5 shadow-2xs cursor-pointer border-0">
-                            {q.status === "answered" ? "View / Edit" : "Respond"}
-                          </DialogTrigger>
-                          <DialogContent className="max-w-lg bg-white rounded-2xl border border-black/10 max-h-[88vh] flex flex-col overflow-hidden">
-                            {/* Top-Right 1/4th Quadrant Watermark Icon under Close button */}
-                            <div className="absolute -top-18 -right-18 pointer-events-none select-none text-black/[0.05] z-0">
-                              <HelpCircle className="w-36 h-36" strokeWidth={1.2} />
-                            </div>
-
-                            <DialogHeader className="relative z-10 shrink-0">
-                              <div className="flex items-center gap-2">
-                                <span className="bg-[#202328] text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full">
-                                  {q.referenceNumber}
-                                </span>
-                                <span className="text-xs text-neutral-500 font-medium">
-                                  {q.category}
-                                </span>
-                              </div>
-                              <DialogTitle className="text-base font-bold text-[#202328] mt-2 flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-[#F6CE46] shrink-0" />
-                                <span>Anonymous Inquirer Question</span>
-                              </DialogTitle>
-                              <DialogDescription className="text-xs text-neutral-500">
-                                Submitted {q.submittedAt}. The sender's identity is strictly anonymous.
-                              </DialogDescription>
-                            </DialogHeader>
-
-                            <div className="space-y-4 py-2 flex-1 min-h-0 overflow-y-auto pr-1">
-                              {/* Question display */}
-                              <div className="p-3.5 bg-neutral-50 border border-black/[0.08] rounded-xl text-xs text-[#202328] leading-relaxed">
-                                <p className="font-semibold text-neutral-500 text-[11px] mb-1 flex items-center gap-1.5">
-                                  <ShieldAlert className="w-3.5 h-3.5 text-neutral-400" />
-                                  Confidential Client Inquiry:
-                                </p>
-                                "{q.question}"
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Dialog
+                            open={selectedQuestion?.id === q.id}
+                            onOpenChange={(isOpen) => {
+                              if (isOpen) handleOpenAnswer(q);
+                              else setSelectedQuestion(null);
+                            }}
+                          >
+                            <DialogTrigger className="inline-flex items-center justify-center rounded-full text-xs font-semibold transition-all bg-[#202328] hover:bg-black text-white h-7 px-3.5 shadow-2xs cursor-pointer border-0">
+                              {q.status === "answered" ? "View / Edit" : "Respond"}
+                            </DialogTrigger>
+                            <DialogContent className="max-w-lg bg-white rounded-2xl border border-black/10 max-h-[88vh] flex flex-col overflow-hidden">
+                              {/* Top-Right 1/4th Quadrant Watermark Icon under Close button */}
+                              <div className="absolute -top-18 -right-18 pointer-events-none select-none text-black/[0.05] z-0">
+                                <HelpCircle className="w-36 h-36" strokeWidth={1.2} />
                               </div>
 
-                              {/* Response Draft */}
-                              <div className="space-y-2">
-                                <label className="text-xs font-bold text-[#202328] flex items-center justify-between">
-                                  <span>Pastoral Counsel Response:</span>
-                                  {q.answeredAt && (
-                                    <span className="text-[11px] text-neutral-400 font-normal">
-                                      Last updated: {q.answeredAt}
-                                    </span>
-                                  )}
-                                </label>
-                                <textarea
-                                  rows={4}
-                                  placeholder="Type compassionate, scripture-rooted pastoral response..."
-                                  className="w-full text-xs p-3 border border-black/10 rounded-xl focus:border-[#202328] focus:ring-0 outline-none resize-none bg-white"
-                                  value={answerDraft}
-                                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                                    setAnswerDraft(e.target.value)
-                                  }
-                                />
-                              </div>
-
-                              <div className="flex items-center justify-end gap-2 pt-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="rounded-full text-xs"
-                                  onClick={() => setSelectedQuestion(null)}
-                                >
-                                  Close
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  className="bg-[#202328] hover:bg-black text-white rounded-full text-xs font-semibold px-4 flex items-center gap-1.5"
-                                  onClick={handleSendAnswer}
-                                  disabled={!answerDraft.trim()}
-                                >
-                                  <Send className="w-3.5 h-3.5" />
-                                  <span>
-                                    {q.status === "answered"
-                                      ? "Update Response"
-                                      : "Send Response"}
+                              <DialogHeader className="relative z-10 shrink-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="bg-[#202328] text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                                    {q.referenceNumber}
                                   </span>
-                                </Button>
+                                  <span className="text-xs text-neutral-500 font-medium">
+                                    {q.category}
+                                  </span>
+                                </div>
+                                <DialogTitle className="text-base font-bold text-[#202328] mt-2 flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-[#F6CE46] shrink-0" />
+                                  <span>Anonymous Inquirer Question</span>
+                                </DialogTitle>
+                                <DialogDescription className="text-xs text-neutral-500">
+                                  Submitted {q.submittedAt}. The sender's identity is strictly anonymous.
+                                </DialogDescription>
+                              </DialogHeader>
+
+                              <div className="space-y-4 py-2 flex-1 min-h-0 overflow-y-auto pr-1">
+                                {/* Question display */}
+                                <div className="p-3.5 bg-neutral-50 border border-black/[0.08] rounded-xl text-xs text-[#202328] leading-relaxed">
+                                  <p className="font-semibold text-neutral-500 text-[11px] mb-1 flex items-center gap-1.5">
+                                    <ShieldAlert className="w-3.5 h-3.5 text-neutral-400" />
+                                    Confidential Client Inquiry:
+                                  </p>
+                                  "{q.question}"
+                                </div>
+
+                                {/* Response Draft */}
+                                <div className="space-y-2">
+                                  <label className="text-xs font-bold text-[#202328] flex items-center justify-between">
+                                    <span>Pastoral Counsel Response:</span>
+                                    {q.answeredAt && (
+                                      <span className="text-[11px] text-neutral-400 font-normal">
+                                        Last updated: {q.answeredAt}
+                                      </span>
+                                    )}
+                                  </label>
+                                  <textarea
+                                    rows={4}
+                                    placeholder="Type compassionate, scripture-rooted pastoral response..."
+                                    className="w-full text-xs p-3 border border-black/10 rounded-xl focus:border-[#202328] focus:ring-0 outline-none resize-none bg-white"
+                                    value={answerDraft}
+                                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                                      setAnswerDraft(e.target.value)
+                                    }
+                                  />
+                                </div>
+
+                                <div className="flex items-center justify-end gap-2 pt-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="rounded-full text-xs"
+                                    onClick={() => setSelectedQuestion(null)}
+                                  >
+                                    Close
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className="bg-[#202328] hover:bg-black text-white rounded-full text-xs font-semibold px-4 flex items-center gap-1.5"
+                                    onClick={handleSendAnswer}
+                                    disabled={!answerDraft.trim()}
+                                  >
+                                    <Send className="w-3.5 h-3.5" />
+                                    <span>
+                                      {q.status === "answered"
+                                        ? "Update Response"
+                                        : "Send Response"}
+                                    </span>
+                                  </Button>
+                                </div>
                               </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                            </DialogContent>
+                          </Dialog>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setQuestionToDelete(q);
+                              setIsDeleteModalOpen(true);
+                            }}
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-neutral-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 transition-colors cursor-pointer"
+                            title={`Delete Question ${q.referenceNumber}`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -310,6 +352,34 @@ export function AnonymousQuestionsTable() {
           </div>
         </div>
       </CardContent>
+
+      {/* Confirmation Modal for Permanent Deletion */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setQuestionToDelete(null);
+        }}
+        onConfirm={async () => {
+          if (!questionToDelete) return;
+          setIsDeleting(true);
+          try {
+            await deleteAnonymousQuestion(questionToDelete.id);
+          } finally {
+            setIsDeleting(false);
+            setIsDeleteModalOpen(false);
+            setQuestionToDelete(null);
+          }
+        }}
+        title="Delete Anonymous Question"
+        itemName={
+          questionToDelete
+            ? `${questionToDelete.referenceNumber} — "${questionToDelete.question}"`
+            : undefined
+        }
+        description="Are you sure you want to permanently delete this anonymous question? It will be removed from the pastoral dashboard and community public wisdom answers."
+        isDeleting={isDeleting}
+      />
     </Card>
   );
 }
