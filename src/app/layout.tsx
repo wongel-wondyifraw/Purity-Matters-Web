@@ -25,9 +25,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} h-full antialiased overflow-hidden bg-[#EBECEF]`}
+      className={`${inter.variable} min-h-full h-full antialiased overflow-hidden bg-[#EBECEF]`}
     >
-      <body className={`${inter.className} h-full max-h-screen text-[#202328] flex flex-col font-sans overflow-hidden bg-[#EBECEF] selection:bg-[#F6CE46] selection:text-[#202328]`}>
+      <body className={`${inter.className} min-h-full h-full h-[100dvh] max-h-[100dvh] text-[#202328] flex flex-col font-sans overflow-hidden bg-[#EBECEF] selection:bg-[#F6CE46] selection:text-[#202328]`}>
         <ToastProvider>
           <QueryProvider>
             <AuthProvider>

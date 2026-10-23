@@ -60,24 +60,24 @@ export function AdminShell({ children }: { children: ReactNode }) {
   return (
     <div
       id="admin-dashboard-container"
-      className="h-screen max-h-screen w-full max-w-full bg-[#EBECEF] flex flex-col lg:flex-row text-[#202328] overflow-hidden"
+      className="h-screen h-[100dvh] max-h-[100dvh] w-full max-w-full bg-[#EBECEF] flex flex-col lg:flex-row text-[#202328] overflow-hidden"
     >
       {/* MAIN DASHBOARD CONTENT (LEFT / CENTER) */}
       <div
         id="admin-main-wrapper"
-        className="flex-1 flex flex-col min-w-0 w-full h-full overflow-hidden"
+        className="flex-1 flex flex-col min-w-0 w-full h-full overflow-visible lg:overflow-hidden relative"
       >
         <AppHeader onOpenDemographics={() => setIsMobileDemographicsOpen(true)} />
 
         <main
           id="admin-main"
-          className="flex-1 flex flex-col min-h-0 w-full p-3.5 sm:p-4 lg:p-6 gap-3.5 lg:gap-4 overflow-y-auto overflow-x-hidden no-scrollbar lg:overflow-hidden pb-24 md:pb-24 lg:pb-6"
+          className="flex-1 flex flex-col min-h-0 w-full p-3.5 sm:p-4 lg:p-6 gap-3.5 lg:gap-4 overflow-y-auto overflow-x-hidden no-scrollbar lg:overflow-hidden pb-28 md:pb-28 lg:pb-6 overscroll-contain"
         >
           <div className="shrink-0">
             <AppHero />
           </div>
 
-          <div className="flex-1 flex flex-col min-h-0 w-full overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0 w-full overflow-visible lg:overflow-hidden">
             {children}
           </div>
         </main>

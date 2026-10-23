@@ -175,31 +175,43 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const clientsQuery = useQuery({
     queryKey: ["admin", "clients"],
     queryFn: fetchClientsApi,
+    refetchInterval: 10000,
+    refetchIntervalInBackground: false,
   });
 
   const counselingQuery = useQuery({
     queryKey: ["admin", "counseling"],
     queryFn: fetchCounselingApi,
+    refetchInterval: 8000,
+    refetchIntervalInBackground: false,
   });
 
   const innerHealingQuery = useQuery({
     queryKey: ["admin", "inner-healing"],
     queryFn: fetchInnerHealingApi,
+    refetchInterval: 10000,
+    refetchIntervalInBackground: false,
   });
 
   const coursesQuery = useQuery({
     queryKey: ["admin", "courses"],
     queryFn: fetchCoursesApi,
+    refetchInterval: 20000,
+    refetchIntervalInBackground: false,
   });
 
   const resourceSalesQuery = useQuery({
     queryKey: ["admin", "resource-sales"],
     queryFn: fetchResourceSalesApi,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: false,
   });
 
   const catalogQuery = useQuery({
     queryKey: ["admin", "resource-catalog"],
     queryFn: fetchResourceCatalogApi,
+    refetchInterval: 20000,
+    refetchIntervalInBackground: false,
   });
 
   const ordersQuery = useQuery({
@@ -212,16 +224,22 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const usersQuery = useQuery({
     queryKey: ["admin", "users"],
     queryFn: fetchSystemUsersApi,
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false,
   });
 
   const questionsQuery = useQuery({
     queryKey: ["admin", "questions"],
     queryFn: fetchAnonymousQuestionsApi,
+    refetchInterval: 10000,
+    refetchIntervalInBackground: false,
   });
 
   const paymentSettingsQuery = useQuery({
     queryKey: ["admin", "payment-settings"],
     queryFn: fetchPaymentSettingsApi,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
   });
 
   const resourceOrdersQuery = useQuery<ResourceOrderRecord[]>({

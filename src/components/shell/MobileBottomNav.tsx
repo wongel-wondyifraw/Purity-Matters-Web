@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -27,6 +27,7 @@ interface MobileBottomNavProps {
 }
 
 export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
+  const router = useRouter();
   const pathname = usePathname();
   const { counselingCount, syncWithRemoteBackend, isRefreshing } = useAdminData();
   const { logout, user } = useAuth();
@@ -43,9 +44,14 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
     pathname.startsWith("/resources") ||
     pathname.startsWith("/users");
 
+  const handleNavigation = (href: string) => {
+    setIsMoreMenuOpen(false);
+    router.push(href);
+  };
+
   const handleSync = async () => {
     setIsMoreMenuOpen(false);
-    await syncWithRemoteBackend();
+    await syncWithRemoteBackend(true);
   };
 
   const handleDemographicsClick = () => {
@@ -58,7 +64,7 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
       {/* FIXED BOTTOM NAVIGATION BAR */}
       <nav
         id="mobile-bottom-nav-bar"
-        className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-black/[0.08] shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-2 pt-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-black/[0.08] shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-2 pt-1 pb-[calc(0.6rem+env(safe-area-inset-bottom,0px))] md:hidden touch-manipulation select-none"
         aria-label="Mobile Navigation"
       >
         <div className="grid grid-cols-5 items-center justify-around max-w-lg mx-auto">
@@ -66,7 +72,7 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
           <Link
             id="mobile-tab-dashboard"
             href="/"
-            className={`flex flex-col items-center justify-center py-1 transition-all group ${
+            className={`flex flex-col items-center justify-center min-h-[50px] py-1 transition-all group touch-manipulation active:scale-95 cursor-pointer ${
               isDashboardActive ? "text-[#202328]" : "text-neutral-400 hover:text-neutral-700"
             }`}
           >
@@ -90,7 +96,7 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
           <Link
             id="mobile-tab-people"
             href="/clients"
-            className={`flex flex-col items-center justify-center py-1 transition-all group ${
+            className={`flex flex-col items-center justify-center min-h-[50px] py-1 transition-all group touch-manipulation active:scale-95 cursor-pointer ${
               isPeopleActive ? "text-[#202328]" : "text-neutral-400 hover:text-neutral-700"
             }`}
           >
@@ -114,7 +120,7 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
           <Link
             id="mobile-tab-counseling"
             href="/counselling"
-            className={`flex flex-col items-center justify-center py-1 relative transition-all group ${
+            className={`flex flex-col items-center justify-center min-h-[50px] py-1 relative transition-all group touch-manipulation active:scale-95 cursor-pointer ${
               isCounselingActive ? "text-[#202328]" : "text-neutral-400 hover:text-neutral-700"
             }`}
           >
@@ -143,7 +149,7 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
           <Link
             id="mobile-tab-questions"
             href="/anonymous-questions"
-            className={`flex flex-col items-center justify-center py-1 transition-all group ${
+            className={`flex flex-col items-center justify-center min-h-[50px] py-1 transition-all group touch-manipulation active:scale-95 cursor-pointer ${
               isQuestionsActive ? "text-[#202328]" : "text-neutral-400 hover:text-neutral-700"
             }`}
           >
@@ -168,7 +174,7 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
             type="button"
             id="mobile-tab-more"
             onClick={() => setIsMoreMenuOpen(true)}
-            className={`flex flex-col items-center justify-center py-1 transition-all cursor-pointer ${
+            className={`flex flex-col items-center justify-center min-h-[50px] py-1 transition-all group touch-manipulation active:scale-95 cursor-pointer ${
               isMoreActive || isMoreMenuOpen
                 ? "text-[#202328]"
                 : "text-neutral-400 hover:text-neutral-700"
@@ -233,10 +239,11 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
             {/* Navigation Links Grid */}
             <div className="py-3 space-y-1.5">
               {/* Inner Healing */}
-              <Link
-                href="/inner-healing"
-                onClick={() => setIsMoreMenuOpen(false)}
-                className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${
+              <button
+                type="button"
+                id="mobile-nav-inner-healing"
+                onClick={() => handleNavigation("/inner-healing")}
+                className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all touch-manipulation cursor-pointer text-left active:scale-[0.98] ${
                   pathname.startsWith("/inner-healing")
                     ? "bg-[#202328] text-white"
                     : "bg-neutral-50 hover:bg-neutral-100 text-[#202328]"
@@ -266,13 +273,14 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 opacity-50 shrink-0" />
-              </Link>
+              </button>
 
               {/* Courses */}
-              <Link
-                href="/courses"
-                onClick={() => setIsMoreMenuOpen(false)}
-                className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${
+              <button
+                type="button"
+                id="mobile-nav-courses"
+                onClick={() => handleNavigation("/courses")}
+                className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all touch-manipulation cursor-pointer text-left active:scale-[0.98] ${
                   pathname.startsWith("/courses")
                     ? "bg-[#202328] text-white"
                     : "bg-neutral-50 hover:bg-neutral-100 text-[#202328]"
@@ -302,13 +310,14 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 opacity-50 shrink-0" />
-              </Link>
+              </button>
 
               {/* Resources */}
-              <Link
-                href="/resources"
-                onClick={() => setIsMoreMenuOpen(false)}
-                className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${
+              <button
+                type="button"
+                id="mobile-nav-resources"
+                onClick={() => handleNavigation("/resources")}
+                className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all touch-manipulation cursor-pointer text-left active:scale-[0.98] ${
                   pathname.startsWith("/resources")
                     ? "bg-[#202328] text-white"
                     : "bg-neutral-50 hover:bg-neutral-100 text-[#202328]"
@@ -338,13 +347,14 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 opacity-50 shrink-0" />
-              </Link>
+              </button>
 
               {/* Users & Access */}
-              <Link
-                href="/users"
-                onClick={() => setIsMoreMenuOpen(false)}
-                className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${
+              <button
+                type="button"
+                id="mobile-nav-users"
+                onClick={() => handleNavigation("/users")}
+                className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all touch-manipulation cursor-pointer text-left active:scale-[0.98] ${
                   pathname.startsWith("/users")
                     ? "bg-[#202328] text-white"
                     : "bg-neutral-50 hover:bg-neutral-100 text-[#202328]"
@@ -374,7 +384,7 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 opacity-50 shrink-0" />
-              </Link>
+              </button>
             </div>
 
             {/* Section Divider */}
