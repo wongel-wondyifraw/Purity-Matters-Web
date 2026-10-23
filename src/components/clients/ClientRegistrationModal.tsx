@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAdminData, NewClientPayload } from "@/context/AdminDataContext";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 export function ClientRegistrationModal() {
   const { addClient } = useAdminData();
@@ -140,17 +141,21 @@ export function ClientRegistrationModal() {
               <label className="text-xs font-semibold text-[#202328] block mb-1">
                 System Role
               </label>
-              <select
+              <CustomDropdown
+                id="select-new-client-role"
                 value={formState.role}
-                onChange={(e) =>
-                  setFormState({ ...formState, role: e.target.value })
+                options={[
+                  { value: "client", label: "Client / Member" },
+                  { value: "counselor", label: "Counselor / Staff" },
+                  { value: "admin", label: "Administrator" },
+                ]}
+                onChange={(val) =>
+                  setFormState({ ...formState, role: val })
                 }
-                className="w-full bg-neutral-50/70 hover:bg-white focus:bg-white border border-black/15 rounded-xl h-9.5 px-3 text-xs text-[#202328] focus:border-[#202328] transition-all cursor-pointer outline-none"
-              >
-                <option value="client">Client / Member</option>
-                <option value="counselor">Counselor / Staff</option>
-                <option value="admin">Administrator</option>
-              </select>
+                variant="rounded"
+                className="w-full"
+                triggerClassName="w-full bg-neutral-50/70 hover:bg-white border border-black/15 rounded-xl h-9.5 px-3 text-xs text-[#202328]"
+              />
             </div>
 
             {/* Preferred Language */}
@@ -158,17 +163,21 @@ export function ClientRegistrationModal() {
               <label className="text-xs font-semibold text-[#202328] block mb-1">
                 Preferred Language
               </label>
-              <select
+              <CustomDropdown
+                id="select-new-client-language"
                 value={formState.languageCode}
-                onChange={(e) =>
-                  setFormState({ ...formState, languageCode: e.target.value })
+                options={[
+                  { value: "en", label: "English (EN)" },
+                  { value: "am", label: "Amharic (AM)" },
+                  { value: "om", label: "Afaan Oromoo (OM)" },
+                ]}
+                onChange={(val) =>
+                  setFormState({ ...formState, languageCode: val })
                 }
-                className="w-full bg-neutral-50/70 hover:bg-white focus:bg-white border border-black/15 rounded-xl h-9.5 px-3 text-xs text-[#202328] focus:border-[#202328] transition-all cursor-pointer outline-none"
-              >
-                <option value="en">English (EN)</option>
-                <option value="am">Amharic (AM)</option>
-                <option value="om">Afaan Oromoo (OM)</option>
-              </select>
+                variant="rounded"
+                className="w-full"
+                triggerClassName="w-full bg-neutral-50/70 hover:bg-white border border-black/15 rounded-xl h-9.5 px-3 text-xs text-[#202328]"
+              />
             </div>
 
             {/* Verification Status */}

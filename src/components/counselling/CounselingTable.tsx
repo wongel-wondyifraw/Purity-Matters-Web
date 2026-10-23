@@ -31,6 +31,7 @@ import { useAdminData } from "@/context/AdminDataContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddCounselingModal } from "./AddCounselingModal";
 import { SearchableCounselorSelect } from "./SearchableCounselorSelect";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 export function CounselingTable() {
   const {
@@ -87,20 +88,22 @@ export function CounselingTable() {
           </div>
 
           {/* 2. Below Search on Mobile: All Action Buttons */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {/* Filter Dropdown */}
-            <select
+            <CustomDropdown
               id="select-counseling-filter"
-              className="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer h-9 shrink-0 flex-1 sm:flex-none"
               value={counselingFilter}
-              onChange={(e) => setCounselingFilter(e.target.value)}
-            >
-              <option value="all">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="assigned">Assigned</option>
-              <option value="scheduled">Scheduled</option>
-              <option value="completed">Completed</option>
-            </select>
+              options={[
+                { value: "all", label: "All Statuses" },
+                { value: "pending", label: "Pending" },
+                { value: "assigned", label: "Assigned" },
+                { value: "scheduled", label: "Scheduled" },
+                { value: "completed", label: "Completed" },
+              ]}
+              onChange={setCounselingFilter}
+              className="shrink-0 flex-1 sm:flex-none"
+              triggerClassName="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs h-9"
+            />
 
             {/* Action Button: + Counseling */}
             <div className="shrink-0">

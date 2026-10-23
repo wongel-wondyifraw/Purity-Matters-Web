@@ -46,6 +46,7 @@ import { ConsoleUser } from "@/types/auth";
 import { CreateUserModal } from "./CreateUserModal";
 import { EditUserModal } from "./EditUserModal";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 export function UsersManagement() {
   const { toast } = useToast();
@@ -224,18 +225,21 @@ export function UsersManagement() {
           </div>
 
           {/* 2. Below Search on Mobile: All Action Buttons */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {/* Filter Dropdown */}
-            <select
-              className="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer h-9 shrink-0 flex-1 sm:flex-none"
+            <CustomDropdown
+              id="select-user-role-filter"
               value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-            >
-              <option value="all">All Roles</option>
-              <option value="superadmin">Superadmins</option>
-              <option value="admin">Administrators</option>
-              <option value="counselor">Counselors</option>
-            </select>
+              options={[
+                { value: "all", label: "All Roles" },
+                { value: "superadmin", label: "Superadmins" },
+                { value: "admin", label: "Administrators" },
+                { value: "counselor", label: "Counselors" },
+              ]}
+              onChange={setRoleFilter}
+              className="shrink-0 flex-1 sm:flex-none"
+              triggerClassName="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs h-9"
+            />
 
             {/* Action Button: + User */}
             <Button

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { useAdminData } from "@/context/AdminDataContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 export function CoursesTable() {
   const {
@@ -75,17 +76,20 @@ export function CoursesTable() {
           </div>
 
           {/* 2. Below Search on Mobile: All Action Buttons */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {/* Filter Dropdown */}
-            <select
-              className="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer h-9 shrink-0 flex-1 sm:flex-none"
+            <CustomDropdown
+              id="select-courses-partner-filter"
               value={partnerFilter}
-              onChange={(e) => setPartnerFilter(e.target.value)}
-            >
-              <option value="all">All Journeys</option>
-              <option value="with_partner">Has Partner</option>
-              <option value="no_partner">Self-Paced Only</option>
-            </select>
+              options={[
+                { value: "all", label: "All Journeys" },
+                { value: "with_partner", label: "Has Partner" },
+                { value: "no_partner", label: "Self-Paced Only" },
+              ]}
+              onChange={setPartnerFilter}
+              className="shrink-0 flex-1 sm:flex-none"
+              triggerClassName="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs h-9"
+            />
 
             {/* Action Button: + Course */}
             <Button

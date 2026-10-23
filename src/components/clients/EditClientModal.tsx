@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAdminData } from "@/context/AdminDataContext";
 import { ClientRecord } from "@/types/admin";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 interface EditClientModalProps {
   client: ClientRecord | null;
@@ -145,15 +146,19 @@ export function EditClientModal({
               <label className="text-xs font-semibold text-[#202328] block mb-1">
                 System Role
               </label>
-              <select
+              <CustomDropdown
+                id="select-edit-client-role"
                 value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full bg-neutral-50/70 hover:bg-white focus:bg-white border border-black/15 rounded-xl h-9.5 px-3 text-xs text-[#202328] focus:border-[#202328] transition-all cursor-pointer outline-none"
-              >
-                <option value="client">Client / Member</option>
-                <option value="counselor">Counselor / Staff</option>
-                <option value="admin">Administrator</option>
-              </select>
+                options={[
+                  { value: "client", label: "Client / Member" },
+                  { value: "counselor", label: "Counselor / Staff" },
+                  { value: "admin", label: "Administrator" },
+                ]}
+                onChange={setRole}
+                variant="rounded"
+                className="w-full"
+                triggerClassName="w-full bg-neutral-50/70 hover:bg-white border border-black/15 rounded-xl h-9.5 px-3 text-xs text-[#202328]"
+              />
             </div>
 
             {/* Preferred Language */}
@@ -161,15 +166,19 @@ export function EditClientModal({
               <label className="text-xs font-semibold text-[#202328] block mb-1">
                 Preferred Language
               </label>
-              <select
+              <CustomDropdown
+                id="select-edit-client-language"
                 value={languageCode}
-                onChange={(e) => setLanguageCode(e.target.value)}
-                className="w-full bg-neutral-50/70 hover:bg-white focus:bg-white border border-black/15 rounded-xl h-9.5 px-3 text-xs text-[#202328] focus:border-[#202328] transition-all cursor-pointer outline-none"
-              >
-                <option value="en">English (EN)</option>
-                <option value="am">Amharic (AM)</option>
-                <option value="om">Afaan Oromoo (OM)</option>
-              </select>
+                options={[
+                  { value: "en", label: "English (EN)" },
+                  { value: "am", label: "Amharic (AM)" },
+                  { value: "om", label: "Afaan Oromoo (OM)" },
+                ]}
+                onChange={setLanguageCode}
+                variant="rounded"
+                className="w-full"
+                triggerClassName="w-full bg-neutral-50/70 hover:bg-white border border-black/15 rounded-xl h-9.5 px-3 text-xs text-[#202328]"
+              />
             </div>
 
             {/* Verification Status */}

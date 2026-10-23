@@ -35,6 +35,7 @@ import { Input } from "@/components/ui/input";
 import { useAdminData, NewCounselingPayload } from "@/context/AdminDataContext";
 import { useAuth } from "@/context/AuthContext";
 import { SearchableCounselorSelect } from "./SearchableCounselorSelect";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 interface ConcernOption {
   id: string;
@@ -724,22 +725,25 @@ export function AddCounselingModal() {
                   <label className="text-xs font-semibold text-[#202328] block mb-1">
                     Initial Status
                   </label>
-                  <select
+                  <CustomDropdown
                     id="select-initial-status"
                     value={formState.status}
-                    onChange={(e) =>
+                    options={[
+                      { value: "pending", label: "Pending" },
+                      { value: "assigned", label: "Assigned" },
+                      { value: "scheduled", label: "Scheduled" },
+                      { value: "completed", label: "Completed" },
+                    ]}
+                    onChange={(val) =>
                       setFormState({
                         ...formState,
-                        status: e.target.value as NewCounselingPayload["status"],
+                        status: val as NewCounselingPayload["status"],
                       })
                     }
-                    className="w-full bg-white border border-black/15 text-xs rounded-xl px-3 h-9.5 text-[#202328] font-medium focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="assigned">Assigned</option>
-                    <option value="scheduled">Scheduled</option>
-                    <option value="completed">Completed</option>
-                  </select>
+                    variant="rounded"
+                    className="w-full"
+                    triggerClassName="w-full bg-white hover:bg-neutral-50 border border-black/15 text-xs rounded-xl px-3 h-9.5 text-[#202328] font-medium"
+                  />
                 </div>
 
                 {/* Counselor Assignment with Search-enabled dropdown (Wider) */}

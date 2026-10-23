@@ -45,6 +45,7 @@ import { EditResourceModal } from "@/components/resources/EditResourceModal";
 import { PaymentSettingsModal } from "@/components/resources/PaymentSettingsModal";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CustomDropdown, DropdownOption } from "@/components/ui/CustomDropdown";
 import {
   PhysicalBookOrderItem,
   ResourceCatalogItem,
@@ -184,18 +185,81 @@ export function ResourcesTable() {
     }
   };
 
+  // Mobile tab options using Lucide React icons instead of emojis
+  const mobileTabOptions: DropdownOption[] = useMemo(
+    () => [
+      {
+        value: "catalog",
+        label: `Catalog (${resourceCatalog.length})`,
+        icon: <BookOpen className="w-3.5 h-3.5 text-[#F6CE46]" />,
+      },
+      {
+        value: "orders",
+        label: `Orders (${resourceOrders.length})`,
+        icon: <ShoppingBag className="w-3.5 h-3.5 text-[#F6CE46]" />,
+      },
+      {
+        value: "shipping",
+        label: `Shipping (${physicalBookOrders.length})`,
+        icon: <Truck className="w-3.5 h-3.5 text-[#F6CE46]" />,
+      },
+    ],
+    [resourceCatalog.length, resourceOrders.length, physicalBookOrders.length]
+  );
+
+  // Status and type filter options for CustomDropdown
+  const filterOptions: DropdownOption[] = useMemo(() => {
+    if (activeTab === "catalog") {
+      return [
+        { value: "all", label: "All Formats" },
+        { value: "ebook", label: "E-Books Only" },
+        { value: "physical_book", label: "Physical Books" },
+      ];
+    }
+    if (activeTab === "orders") {
+      return [
+        { value: "all", label: "All Payment States" },
+        { value: "payment_submitted", label: "Pending Verification" },
+        { value: "verified", label: "Verified & Delivered" },
+        { value: "pending", label: "Awaiting Payment" },
+        { value: "rejected", label: "Rejected" },
+      ];
+    }
+    return [
+      { value: "all", label: "All Delivery Status" },
+      { value: "pending", label: "Pending" },
+      { value: "dispatched", label: "Dispatched" },
+      { value: "delivered", label: "Delivered" },
+      { value: "cancelled", label: "Cancelled" },
+    ];
+  }, [activeTab]);
+
+  const shippingStatusOptions: DropdownOption[] = [
+    { value: "pending", label: "Pending" },
+    { value: "dispatched", label: "Dispatched" },
+    { value: "delivered", label: "Delivered" },
+    { value: "cancelled", label: "Cancelled" },
+  ];
+
   return (
     <Card id="resources-management-card" className="flex-1 flex flex-col min-h-0 h-full bg-white/90 backdrop-blur-md border border-black/[0.06] rounded-2xl shadow-2xs overflow-hidden">
       {/* Header and Controls */}
       <CardHeader id="resources-header" className="shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 border-b border-black/[0.06] pb-3.5 sm:pb-4">
-        <div>
-          <CardTitle className="text-base sm:text-lg font-bold text-[#202328] tracking-tight flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#F6CE46] shrink-0" />
-            <span>Ministry Resources & E-Books</span>
-          </CardTitle>
-          <CardDescription className="text-xs text-neutral-500 font-normal mt-0.5">
-            Digital publications, orders & payment verification, and physical courier shipping.
-          </CardDescription>
+        <div className="flex items-start justify-between w-full sm:w-auto">
+          <div>
+            <CardTitle className="text-base sm:text-lg font-bold text-[#202328] tracking-tight flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#F6CE46] shrink-0" />
+              <span>Ministry Resources & E-Books</span>
+            </CardTitle>
+            <CardDescription className="text-xs text-neutral-500 font-normal mt-0.5">
+              Digital publications, orders & payment verification, and physical courier shipping.
+            </CardDescription>
+          </div>
+
+          {/* Top corner gear icon for mobile */}
+          <div className="sm:hidden shrink-0 ml-2">
+            <PaymentSettingsModal />
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
@@ -218,23 +282,21 @@ export function ResourcesTable() {
             />
           </div>
 
-          {/* 2. Below Search on Mobile: All Action Buttons & Switchers */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto order-2 sm:order-1">
-            {/* View Switcher: Dropdown on Mobile UI layout */}
-            <div className="relative sm:hidden shrink-0 flex-1">
-              <select
+          {/* 2. Below Search on Mobile: All Action Buttons & Switchers (wrap onto next line when screen is shrinking) */}
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto order-2 sm:order-1">
+            {/* View Switcher: CustomDropdown with Lucide icons on Mobile UI layout */}
+            <div className="relative sm:hidden flex-1 min-w-[120px]">
+              <CustomDropdown
                 id="mobile-tab-dropdown"
                 value={activeTab}
-                onChange={(e) => {
-                  setActiveTab(e.target.value as "catalog" | "orders" | "shipping");
+                options={mobileTabOptions}
+                onChange={(val) => {
+                  setActiveTab(val as "catalog" | "orders" | "shipping");
                   setOrderStatusFilter("all");
                 }}
-                className="w-full bg-neutral-100 border border-black/10 text-xs font-bold rounded-full px-3.5 py-1.5 text-[#202328] shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer h-9"
-              >
-                <option value="catalog">📖 Catalog ({resourceCatalog.length})</option>
-                <option value="orders">🛍️ Orders ({resourceOrders.length})</option>
-                <option value="shipping">🚚 Shipping ({physicalBookOrders.length})</option>
-              </select>
+                className="w-full"
+                triggerClassName="w-full bg-neutral-100 hover:bg-neutral-200 border border-black/10 text-xs font-bold rounded-full px-3.5 py-1.5 text-[#202328] shadow-2xs h-9"
+              />
             </div>
 
             {/* View Switcher: Pill tabs on Desktop (sm:flex) */}
@@ -304,51 +366,28 @@ export function ResourcesTable() {
             </div>
 
             {/* Filter Dropdown */}
-            <select
+            <CustomDropdown
               id="select-status-filter"
-              className="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer h-9 shrink-0 flex-1 sm:flex-none"
-              value={
-                activeTab === "catalog"
-                  ? typeFilter
-                  : orderStatusFilter
-              }
-              onChange={(e) => {
+              value={activeTab === "catalog" ? typeFilter : orderStatusFilter}
+              options={filterOptions}
+              onChange={(val) => {
                 if (activeTab === "catalog") {
-                  setTypeFilter(e.target.value as "all" | "ebook" | "physical_book");
+                  setTypeFilter(val as "all" | "ebook" | "physical_book");
                 } else {
-                  setOrderStatusFilter(e.target.value);
+                  setOrderStatusFilter(val);
                 }
               }}
-            >
-              {activeTab === "catalog" ? (
-                <>
-                  <option value="all">All Formats</option>
-                  <option value="ebook">E-Books Only</option>
-                  <option value="physical_book">Physical Books</option>
-                </>
-              ) : activeTab === "orders" ? (
-                <>
-                  <option value="all">All Payment States</option>
-                  <option value="payment_submitted">Pending Verification</option>
-                  <option value="verified">Verified & Delivered</option>
-                  <option value="pending">Awaiting Payment</option>
-                  <option value="rejected">Rejected</option>
-                </>
-              ) : (
-                <>
-                  <option value="all">All Delivery Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="dispatched">Dispatched</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="cancelled">Cancelled</option>
-                </>
-              )}
-            </select>
+              className="flex-1 sm:flex-none min-w-[120px]"
+              triggerClassName="w-full bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs h-9"
+            />
 
             {/* Action Buttons: strictly single-word with + */}
             <div className="flex items-center gap-2 shrink-0">
               <AddResourceModal />
-              <PaymentSettingsModal />
+              {/* Desktop gear icon */}
+              <div className="hidden sm:block">
+                <PaymentSettingsModal />
+              </div>
             </div>
           </div>
         </div>
@@ -898,15 +937,19 @@ export function ResourcesTable() {
 
                         <TableCell className="px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
-                            <select
+                            <CustomDropdown
+                              id={`select-status-${order.id}`}
                               value={order.status}
-                              onChange={(e) =>
+                              options={shippingStatusOptions}
+                              onChange={(val) =>
                                 updatePhysicalOrderStatus(
                                   order.id,
-                                  e.target.value as PhysicalBookOrderItem["status"]
+                                  val as PhysicalBookOrderItem["status"]
                                 )
                               }
-                              className={`text-xs font-bold rounded-lg px-2.5 py-1 border transition-colors cursor-pointer outline-none ${
+                              size="sm"
+                              variant="compact"
+                              triggerClassName={`text-xs font-bold px-2.5 py-1 border transition-colors ${
                                 order.status === "delivered"
                                   ? "bg-[#F6CE46]/25 text-[#202328] border-[#F6CE46]/50"
                                   : order.status === "dispatched"
@@ -915,12 +958,7 @@ export function ResourcesTable() {
                                   ? "bg-neutral-100 text-neutral-400 border-black/10"
                                   : "bg-neutral-100 text-[#202328] border-black/10"
                               }`}
-                            >
-                              <option value="pending">Pending</option>
-                              <option value="dispatched">Dispatched</option>
-                              <option value="delivered">Delivered</option>
-                              <option value="cancelled">Cancelled</option>
-                            </select>
+                            />
 
                             {/* Delete button available for ALL shipping states */}
                             <button

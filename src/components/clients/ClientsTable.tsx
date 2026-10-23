@@ -43,6 +43,7 @@ import { EditClientModal } from "@/components/clients/EditClientModal";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientRecord } from "@/types/admin";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 export function ClientsTable() {
   const {
@@ -124,20 +125,23 @@ export function ClientsTable() {
           </div>
 
           {/* 2. Below Search on Mobile: All Action Buttons */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {/* Filter Dropdown */}
-            <select
-              className="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer h-9 shrink-0 flex-1 sm:flex-none"
+            <CustomDropdown
+              id="select-clients-filter"
               value={clientFilter}
-              onChange={(e) => setClientFilter(e.target.value)}
-            >
-              <option value="all">All Registrations</option>
-              <option value="verified">Verified (Has Phone)</option>
-              <option value="in-progress">In-Progress</option>
-              <option value="admin">Administrators</option>
-              <option value="ethiopia">Ethiopia (+251)</option>
-              <option value="diaspora">Diaspora / Global</option>
-            </select>
+              options={[
+                { value: "all", label: "All Registrations" },
+                { value: "verified", label: "Verified (Has Phone)" },
+                { value: "in-progress", label: "In-Progress" },
+                { value: "admin", label: "Administrators" },
+                { value: "ethiopia", label: "Ethiopia (+251)" },
+                { value: "diaspora", label: "Diaspora / Global" },
+              ]}
+              onChange={setClientFilter}
+              className="shrink-0 flex-1 sm:flex-none"
+              triggerClassName="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs h-9"
+            />
 
             {/* Export Action Button */}
             <Button

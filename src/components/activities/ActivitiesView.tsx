@@ -38,6 +38,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useAdminData } from "@/context/AdminDataContext";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 interface ActivityItem {
   id: string;
@@ -255,21 +256,24 @@ export function ActivitiesView() {
           </div>
 
           {/* 2. Below Search on Mobile: All Action Buttons */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {/* Filter Dropdown */}
-            <select
-              className="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer h-9 shrink-0 flex-1 sm:flex-none"
+            <CustomDropdown
+              id="select-activities-filter"
               value={activityFilter}
-              onChange={(e) => setActivityFilter(e.target.value)}
-            >
-              <option value="all">All Activities ({rawActivityFeed.length})</option>
-              <option value="registration">Registrations</option>
-              <option value="counseling">Counselling</option>
-              <option value="inner_healing">Inner Healing</option>
-              <option value="resource">Resources</option>
-              <option value="course">Courses</option>
-              <option value="note">Pastoral Notes</option>
-            </select>
+              options={[
+                { value: "all", label: `All Activities (${rawActivityFeed.length})` },
+                { value: "registration", label: "Registrations" },
+                { value: "counseling", label: "Counselling" },
+                { value: "inner_healing", label: "Inner Healing" },
+                { value: "resource", label: "Resources" },
+                { value: "course", label: "Courses" },
+                { value: "note", label: "Pastoral Notes" },
+              ]}
+              onChange={setActivityFilter}
+              className="shrink-0 flex-1 sm:flex-none"
+              triggerClassName="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs h-9"
+            />
 
             {/* Export Action Button */}
             <Button

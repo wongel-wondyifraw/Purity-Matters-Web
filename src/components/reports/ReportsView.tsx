@@ -41,6 +41,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useAdminData } from "@/context/AdminDataContext";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 export function ReportsView() {
   const {
@@ -210,20 +211,23 @@ export function ReportsView() {
           </div>
 
           {/* 2. Below Search on Mobile: All Action Buttons */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {/* Filter Dropdown */}
-            <select
-              className="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer h-9 shrink-0 flex-1 sm:flex-none"
+            <CustomDropdown
+              id="select-reports-status-filter"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="all">All Departments ({reportBreakdowns.length})</option>
-              <option value="operational">Operational</option>
-              <option value="high demand">High Demand</option>
-              <option value="active">Active</option>
-              <option value="steady">Steady</option>
-              <option value="automated">Automated</option>
-            </select>
+              options={[
+                { value: "all", label: `All Departments (${reportBreakdowns.length})` },
+                { value: "operational", label: "Operational" },
+                { value: "high demand", label: "High Demand" },
+                { value: "active", label: "Active" },
+                { value: "steady", label: "Steady" },
+                { value: "automated", label: "Automated" },
+              ]}
+              onChange={setStatusFilter}
+              className="shrink-0 flex-1 sm:flex-none"
+              triggerClassName="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs h-9"
+            />
 
             {/* Export Action Button */}
             <Button
@@ -375,16 +379,20 @@ export function ReportsView() {
               <label className="text-xs font-semibold text-[#202328] block mb-1">
                 Report Time Range
               </label>
-              <select
-                className="w-full bg-white/80 border border-black/10 rounded-xl px-3 py-2 text-xs text-[#202328]"
+              <CustomDropdown
+                id="select-reports-period"
                 value={reportPeriod}
-                onChange={(e) => setReportPeriod(e.target.value)}
-              >
-                <option value="all_time">Cumulative (All Time)</option>
-                <option value="month">Current Month</option>
-                <option value="quarter">Last Quarter (90 Days)</option>
-                <option value="year">Calendar Year to Date</option>
-              </select>
+                options={[
+                  { value: "all_time", label: "Cumulative (All Time)" },
+                  { value: "month", label: "Current Month" },
+                  { value: "quarter", label: "Last Quarter (90 Days)" },
+                  { value: "year", label: "Calendar Year to Date" },
+                ]}
+                onChange={setReportPeriod}
+                variant="rounded"
+                className="w-full"
+                triggerClassName="w-full bg-white/80 hover:bg-white border border-black/10 rounded-xl px-3 py-2 text-xs text-[#202328]"
+              />
             </div>
 
             <div className="bg-neutral-50 rounded-xl p-3 border border-black/[0.06] text-xs space-y-1.5 text-neutral-600">

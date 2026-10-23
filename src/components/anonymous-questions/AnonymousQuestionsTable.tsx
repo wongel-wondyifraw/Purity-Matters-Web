@@ -41,6 +41,7 @@ import { useAdminData } from "@/context/AdminDataContext";
 import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnonymousQuestionRecord } from "@/types/admin";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 export function AnonymousQuestionsTable() {
   const {
@@ -121,19 +122,20 @@ export function AnonymousQuestionsTable() {
           </div>
 
           {/* 2. Below Search on Mobile: All Action Buttons */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {/* Filter Dropdown */}
-            <select
-              className="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer h-9 shrink-0 flex-1 sm:flex-none"
+            <CustomDropdown
+              id="select-anonymous-questions-filter"
               value={statusFilter}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setStatusFilter(e.target.value)
-              }
-            >
-              <option value="all">All Questions</option>
-              <option value="pending">Pending Response</option>
-              <option value="answered">Answered / Replied</option>
-            </select>
+              options={[
+                { value: "all", label: "All Questions" },
+                { value: "pending", label: "Pending Response" },
+                { value: "answered", label: "Answered / Replied" },
+              ]}
+              onChange={setStatusFilter}
+              className="shrink-0 flex-1 sm:flex-none"
+              triggerClassName="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs h-9"
+            />
 
             {/* Action Button: + Question */}
             <Button
