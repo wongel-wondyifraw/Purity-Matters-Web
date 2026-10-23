@@ -230,18 +230,41 @@
     touch-action: manipulation;
   }
 
-  /* Smooth touch inertial scrolling on mobile elements with overscroll containment */
-  [data-slot="table-container"],
+  /* Vertical-only scroll containers */
   #admin-main,
-  #mobile-more-menu-sheet,
-  .overflow-x-auto,
-  .overflow-y-auto,
-  .overflow-auto {
+  #mobile-more-menu-sheet {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     touch-action: pan-y;
     -ms-overflow-style: none !important;
     scrollbar-width: none !important;
+  }
+
+  /* Universal mobile horizontal & bidirectional scrolling for tables */
+  [data-slot="table-container"],
+  .overflow-x-auto,
+  .overflow-auto {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y !important;
+    overscroll-behavior-x: contain;
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+
+  /* Table elements allow horizontal swipe gestures across headers, cells, and rows */
+  [data-slot="table-container"] table,
+  [data-slot="table-container"] thead,
+  [data-slot="table-container"] tbody,
+  [data-slot="table-container"] tr,
+  [data-slot="table-container"] th,
+  [data-slot="table-container"] td,
+  .overflow-x-auto table,
+  .overflow-x-auto thead,
+  .overflow-x-auto tbody,
+  .overflow-x-auto tr,
+  .overflow-x-auto th,
+  .overflow-x-auto td {
+    touch-action: pan-x pan-y !important;
   }
 
   [data-slot="table-container"]::-webkit-scrollbar,

@@ -9,7 +9,6 @@ import {
   Send,
   ShieldAlert,
   Trash2,
-  Plus,
 } from "lucide-react";
 import {
   Card,
@@ -42,6 +41,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnonymousQuestionRecord } from "@/types/admin";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { TablePagination } from "@/components/ui/TablePagination";
 
 export function AnonymousQuestionsTable() {
   const {
@@ -81,6 +81,19 @@ export function AnonymousQuestionsTable() {
       return matchSearch && matchStatus;
     });
   }, [anonymousQuestions, searchQuery, statusFilter]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Reset page when search or filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
+
+  const paginatedQuestions = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredQuestions.slice(start, start + pageSize);
+  }, [filteredQuestions, currentPage, pageSize]);
 
   const handleOpenAnswer = (q: AnonymousQuestionRecord) => {
     setSelectedQuestion(q);
@@ -136,17 +149,6 @@ export function AnonymousQuestionsTable() {
               className="shrink-0 flex-1 sm:flex-none"
               triggerClassName="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs h-9"
             />
-
-            {/* Action Button: + Question */}
-            <Button
-              type="button"
-              onClick={() => syncWithRemoteBackend()}
-              disabled={isRefreshing}
-              className="bg-[#202328] hover:bg-black text-white text-xs h-9 px-4 rounded-full cursor-pointer shadow-2xs font-semibold flex items-center gap-1.5 transition-all shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5 text-[#F6CE46]" />
-              <span>Question</span>
-            </Button>
           </div>
         </div>
       </CardHeader>
@@ -217,7 +219,7 @@ export function AnonymousQuestionsTable() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredQuestions.map((q) => (
+                  paginatedQuestions.map((q) => (
                     <TableRow
                       key={q.id}
                       className="border-b border-black/[0.04] hover:bg-black/[0.02] transition-colors"
@@ -371,6 +373,16 @@ export function AnonymousQuestionsTable() {
           </div>
         </div>
       </CardContent>
+
+      {/* Pagination Footer */}
+      <TablePagination
+        currentPage={currentPage}
+        totalItems={filteredQuestions.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemLabel="questions"
+      />
 
       {/* Confirmation Modal for Permanent Deletion */}
       <ConfirmDeleteModal

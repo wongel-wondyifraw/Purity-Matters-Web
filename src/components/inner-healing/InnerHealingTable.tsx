@@ -22,6 +22,7 @@ import {
 import { useAdminData } from "@/context/AdminDataContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { TablePagination } from "@/components/ui/TablePagination";
 
 export function InnerHealingTable() {
   const {
@@ -49,6 +50,19 @@ export function InnerHealingTable() {
       return item.status === statusFilter;
     });
   }, [innerHealingRequests, searchQuery, statusFilter]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Reset to first page on search or filter change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
+
+  const paginatedRequests = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredRequests.slice(start, start + pageSize);
+  }, [filteredRequests, currentPage, pageSize]);
 
   return (
     <Card className="flex-1 flex flex-col min-h-0 h-full bg-white/90 backdrop-blur-md border border-black/[0.06] rounded-2xl shadow-2xs overflow-hidden">
@@ -171,7 +185,7 @@ export function InnerHealingTable() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredRequests.map((item) => (
+                paginatedRequests.map((item) => (
                   <TableRow
                     key={item.id}
                     className="border-b border-black/[0.04] hover:bg-black/[0.02] transition-colors"
@@ -244,6 +258,16 @@ export function InnerHealingTable() {
           </div>
         </div>
       </CardContent>
+
+      {/* Pagination Footer */}
+      <TablePagination
+        currentPage={currentPage}
+        totalItems={filteredRequests.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemLabel="requests"
+      />
     </Card>
   );
 }

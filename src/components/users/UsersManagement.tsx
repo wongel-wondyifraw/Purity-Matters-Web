@@ -47,6 +47,7 @@ import { CreateUserModal } from "./CreateUserModal";
 import { EditUserModal } from "./EditUserModal";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { TablePagination } from "@/components/ui/TablePagination";
 
 export function UsersManagement() {
   const { toast } = useToast();
@@ -192,6 +193,19 @@ export function UsersManagement() {
     });
   }, [users, searchQuery, roleFilter]);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Reset page when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, roleFilter]);
+
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredUsers.slice(start, start + pageSize);
+  }, [filteredUsers, currentPage, pageSize]);
+
   const getInitials = (u: ConsoleUser) => {
     const f = u.firstName ? u.firstName.charAt(0).toUpperCase() : "";
     const l = u.lastName ? u.lastName.charAt(0).toUpperCase() : "";
@@ -311,7 +325,7 @@ export function UsersManagement() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredUsers.map((u) => {
+                  paginatedUsers.map((u) => {
                     const isSelf = currentUser?.id === u.id;
                     const isSuper = u.role.toLowerCase() === "superadmin";
 
@@ -472,6 +486,16 @@ export function UsersManagement() {
           </div>
         </div>
       </CardContent>
+
+      {/* Pagination Footer */}
+      <TablePagination
+        currentPage={currentPage}
+        totalItems={filteredUsers.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemLabel="users"
+      />
 
       {/* Modals */}
       <CreateUserModal

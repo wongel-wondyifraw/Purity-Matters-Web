@@ -32,6 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AddCounselingModal } from "./AddCounselingModal";
 import { SearchableCounselorSelect } from "./SearchableCounselorSelect";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { TablePagination } from "@/components/ui/TablePagination";
 
 export function CounselingTable() {
   const {
@@ -61,6 +62,19 @@ export function CounselingTable() {
       return item.status === counselingFilter;
     });
   }, [counselingRequests, counselingFilter, searchQuery]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Reset to first page on search or filter change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, counselingFilter]);
+
+  const paginatedCounseling = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredCounseling.slice(start, start + pageSize);
+  }, [filteredCounseling, currentPage, pageSize]);
 
   return (
     <Card className="flex-1 flex flex-col min-h-0 h-full bg-white/90 backdrop-blur-md border border-black/[0.06] rounded-2xl shadow-2xs overflow-hidden">
@@ -183,7 +197,7 @@ export function CounselingTable() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredCounseling.map((item) => (
+                paginatedCounseling.map((item) => (
                   <TableRow
                     key={item.id}
                     className="border-b border-black/[0.04] hover:bg-black/[0.02] transition-colors"
@@ -336,6 +350,16 @@ export function CounselingTable() {
           </div>
         </div>
       </CardContent>
+
+      {/* Pagination Footer */}
+      <TablePagination
+        currentPage={currentPage}
+        totalItems={filteredCounseling.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemLabel="requests"
+      />
     </Card>
   );
 }

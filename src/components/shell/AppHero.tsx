@@ -1,11 +1,14 @@
 "use client";
 
 import React from "react";
+import { usePathname } from "next/navigation";
 import { Users, UserCheck, BookOpen } from "lucide-react";
 import { useAdminData } from "@/context/AdminDataContext";
 import { useAuth } from "@/context/AuthContext";
 
 export function AppHero() {
+  const pathname = usePathname();
+  const isDashboard = pathname === "/";
   const {
     totalClients,
     counselingCount,
@@ -18,7 +21,9 @@ export function AppHero() {
   return (
     <section
       id="crextio-hero-section"
-      className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-1 shrink-0"
+      className={`flex-col xl:flex-row xl:items-center justify-between gap-4 pb-1 shrink-0 ${
+        isDashboard ? "flex" : "hidden lg:flex"
+      }`}
     >
       {/* Left Side: Welcome Headline */}
       <div id="crextio-welcome-header">
@@ -30,7 +35,9 @@ export function AppHero() {
       {/* Right Side: 3 Giant Stationary Metric Numbers */}
       <div
         id="crextio-stationary-kpis"
-        className="flex items-center gap-4 sm:gap-8 xl:gap-11 pt-1 xl:pt-0 overflow-x-auto no-scrollbar"
+        className={`items-center gap-4 sm:gap-8 xl:gap-11 pt-1 xl:pt-0 overflow-x-auto no-scrollbar ${
+          isDashboard ? "flex" : "hidden lg:flex"
+        }`}
       >
         {/* KPI 1: Clients */}
         <div className="flex items-start gap-2.5">

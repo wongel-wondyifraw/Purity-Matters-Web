@@ -46,6 +46,7 @@ import { PaymentSettingsModal } from "@/components/resources/PaymentSettingsModa
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomDropdown, DropdownOption } from "@/components/ui/CustomDropdown";
+import { TablePagination } from "@/components/ui/TablePagination";
 import {
   PhysicalBookOrderItem,
   ResourceCatalogItem,
@@ -150,6 +151,41 @@ export function ResourcesTable() {
       return true;
     });
   }, [physicalBookOrders, searchQuery, orderStatusFilter]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Reset page when tab or filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery, typeFilter, orderStatusFilter]);
+
+  const paginatedCatalog = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredCatalog.slice(start, start + pageSize);
+  }, [filteredCatalog, currentPage, pageSize]);
+
+  const paginatedResourceOrders = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredResourceOrders.slice(start, start + pageSize);
+  }, [filteredResourceOrders, currentPage, pageSize]);
+
+  const paginatedPhysicalOrders = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredPhysicalOrders.slice(start, start + pageSize);
+  }, [filteredPhysicalOrders, currentPage, pageSize]);
+
+  const currentTabTotal = useMemo(() => {
+    if (activeTab === "catalog") return filteredCatalog.length;
+    if (activeTab === "orders") return filteredResourceOrders.length;
+    return filteredPhysicalOrders.length;
+  }, [activeTab, filteredCatalog.length, filteredResourceOrders.length, filteredPhysicalOrders.length]);
+
+  const currentTabLabel = useMemo(() => {
+    if (activeTab === "catalog") return "resources";
+    if (activeTab === "orders") return "orders";
+    return "shipments";
+  }, [activeTab]);
 
   // Count pending verification orders for visual notification
   const pendingVerificationCount = useMemo(() => {
@@ -485,7 +521,7 @@ export function ResourcesTable() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredCatalog.map((item) => (
+                    paginatedCatalog.map((item) => (
                       <TableRow
                         key={item.id}
                         className="border-b border-black/[0.04] hover:bg-black/[0.02] transition-colors"
@@ -656,7 +692,7 @@ export function ResourcesTable() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredResourceOrders.map((order) => {
+                    paginatedResourceOrders.map((order) => {
                       const isSubmitted = order.paymentStatus === "payment_submitted";
                       const isVerified = order.paymentStatus === "verified";
                       const isRejected = order.paymentStatus === "rejected";
@@ -888,7 +924,7 @@ export function ResourcesTable() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredPhysicalOrders.map((order) => (
+                    paginatedPhysicalOrders.map((order) => (
                       <TableRow
                         key={order.id}
                         className="border-b border-black/[0.04] hover:bg-black/[0.02] transition-colors"
@@ -1003,6 +1039,16 @@ export function ResourcesTable() {
           </div>
         </div>
       </CardContent>
+
+      {/* Pagination Footer */}
+      <TablePagination
+        currentPage={currentPage}
+        totalItems={currentTabTotal}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemLabel={currentTabLabel}
+      />
 
       {/* Edit Resource Modal */}
       <EditResourceModal

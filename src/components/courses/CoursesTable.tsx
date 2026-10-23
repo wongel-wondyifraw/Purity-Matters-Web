@@ -22,6 +22,7 @@ import {
 import { useAdminData } from "@/context/AdminDataContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { TablePagination } from "@/components/ui/TablePagination";
 
 export function CoursesTable() {
   const {
@@ -49,6 +50,19 @@ export function CoursesTable() {
       return true;
     });
   }, [courseProgressList, searchQuery, partnerFilter]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Reset to first page on search or filter change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, partnerFilter]);
+
+  const paginatedCourses = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredCourses.slice(start, start + pageSize);
+  }, [filteredCourses, currentPage, pageSize]);
 
   return (
     <Card className="flex-1 flex flex-col min-h-0 h-full bg-white/90 backdrop-blur-md border border-black/[0.06] rounded-2xl shadow-2xs overflow-hidden">
@@ -165,7 +179,7 @@ export function CoursesTable() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredCourses.map((item) => (
+                paginatedCourses.map((item) => (
                   <TableRow
                     key={item.id}
                     className="border-b border-black/[0.04] hover:bg-black/[0.02] transition-colors"
@@ -219,6 +233,16 @@ export function CoursesTable() {
           </div>
         </div>
       </CardContent>
+
+      {/* Pagination Footer */}
+      <TablePagination
+        currentPage={currentPage}
+        totalItems={filteredCourses.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemLabel="journeys"
+      />
     </Card>
   );
 }

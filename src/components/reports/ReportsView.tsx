@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAdminData } from "@/context/AdminDataContext";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { TablePagination } from "@/components/ui/TablePagination";
 
 export function ReportsView() {
   const {
@@ -151,6 +152,19 @@ export function ReportsView() {
       return true;
     });
   }, [reportBreakdowns, searchQuery, statusFilter]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Reset page when search or filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
+
+  const paginatedBreakdowns = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredBreakdowns.slice(start, start + pageSize);
+  }, [filteredBreakdowns, currentPage, pageSize]);
 
   const exportReportCsv = () => {
     const headers = [
@@ -319,7 +333,7 @@ export function ReportsView() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredBreakdowns.map((row, idx) => {
+                  paginatedBreakdowns.map((row, idx) => {
                     const Icon = row.icon;
                     return (
                       <TableRow
@@ -360,6 +374,16 @@ export function ReportsView() {
           </div>
         </div>
       </CardContent>
+
+      {/* Pagination Footer */}
+      <TablePagination
+        currentPage={currentPage}
+        totalItems={filteredBreakdowns.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemLabel="departments"
+      />
 
       {/* Generate Report Dialog */}
       <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>

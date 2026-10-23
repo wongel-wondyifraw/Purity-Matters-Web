@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAdminData } from "@/context/AdminDataContext";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { TablePagination } from "@/components/ui/TablePagination";
 
 interface ActivityItem {
   id: string;
@@ -162,6 +163,19 @@ export function ActivitiesView() {
       return true;
     });
   }, [rawActivityFeed, searchQuery, activityFilter]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Reset page when search or filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activityFilter]);
+
+  const paginatedActivities = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredActivities.slice(start, start + pageSize);
+  }, [filteredActivities, currentPage, pageSize]);
 
   const handleAddActivity = (e: React.FormEvent) => {
     e.preventDefault();
@@ -334,7 +348,7 @@ export function ActivitiesView() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredActivities.map((item) => (
+                  paginatedActivities.map((item) => (
                     <TableRow
                       key={item.id}
                       className="border-b border-black/[0.04] hover:bg-black/[0.02] transition-colors"
@@ -369,6 +383,16 @@ export function ActivitiesView() {
           </div>
         </div>
       </CardContent>
+
+      {/* Pagination Footer */}
+      <TablePagination
+        currentPage={currentPage}
+        totalItems={filteredActivities.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemLabel="activities"
+      />
 
       {/* Log Activity Dialog */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>

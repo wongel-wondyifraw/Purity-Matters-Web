@@ -44,6 +44,7 @@ import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientRecord } from "@/types/admin";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { TablePagination } from "@/components/ui/TablePagination";
 
 export function ClientsTable() {
   const {
@@ -98,6 +99,19 @@ export function ClientsTable() {
       return true;
     });
   }, [clients, searchQuery, clientFilter]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Reset to first page on search or filter change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, clientFilter]);
+
+  const paginatedClients = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredClients.slice(start, start + pageSize);
+  }, [filteredClients, currentPage, pageSize]);
 
   return (
     <Card className="flex-1 flex flex-col min-h-0 h-full bg-white/90 backdrop-blur-md border border-black/[0.06] rounded-2xl shadow-2xs overflow-hidden">
@@ -232,7 +246,7 @@ export function ClientsTable() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredClients.map((client) => (
+                  paginatedClients.map((client) => (
                     <TableRow
                       key={client.id}
                       className="border-b border-black/[0.04] hover:bg-black/[0.02] transition-colors"
@@ -372,6 +386,16 @@ export function ClientsTable() {
           </div>
         </div>
       </CardContent>
+
+      {/* Pagination Footer */}
+      <TablePagination
+        currentPage={currentPage}
+        totalItems={filteredClients.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemLabel="clients"
+      />
 
       {/* Edit Client Modal */}
       <EditClientModal
