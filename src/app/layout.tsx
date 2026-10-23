@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/toast";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { AuthProvider } from "@/context/AuthContext";
 import { AdminDataProvider } from "@/context/AdminDataContext";
+import { PwaProvider } from "@/context/PwaContext";
+import { IosInstallModal } from "@/components/pwa/IosInstallModal";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -12,9 +14,31 @@ const inter = Inter({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  themeColor: "#202328",
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   title: "Purity Matters Web Console | Admin Management",
   description: "Administrative dashboard for managing Telegram bot clients, counselling requests, inner healing sessions, courses, and digital resources.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Purity Matters",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -32,7 +56,10 @@ export default function RootLayout({
           <QueryProvider>
             <AuthProvider>
               <AdminDataProvider>
-                {children}
+                <PwaProvider>
+                  {children}
+                  <IosInstallModal />
+                </PwaProvider>
               </AdminDataProvider>
             </AuthProvider>
           </QueryProvider>

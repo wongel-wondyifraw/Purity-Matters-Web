@@ -3,9 +3,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, ChevronDown, ShieldCheck, Mail, PieChart } from "lucide-react";
+import { LogOut, ChevronDown, ShieldCheck, Mail, PieChart, Download } from "lucide-react";
 import { useAdminData } from "@/context/AdminDataContext";
 import { useAuth } from "@/context/AuthContext";
+import { usePwa } from "@/context/PwaContext";
 
 interface NavItem {
   label: string;
@@ -32,6 +33,7 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
   const pathname = usePathname();
   const { syncWithRemoteBackend, isRefreshing } = useAdminData();
   const { user, logout, getInitials } = useAuth();
+  const { isStandalone, installPwa } = usePwa();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -110,8 +112,37 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
           })}
         </nav>
 
-        {/* Right: Quick Demographics (mobile), User Profile Flat Indicator */}
+        {/* Right: Quick Demographics (mobile), PWA Install, User Profile Flat Indicator */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          {/* PWA Install Button (hidden when running as standalone app) */}
+          {!isStandalone && (
+            <>
+              {/* Desktop Pill */}
+              <button
+                type="button"
+                id="header-pwa-install-desktop"
+                onClick={installPwa}
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F6CE46] hover:bg-[#ebd534] text-[#202328] font-bold text-xs shadow-2xs transition-all active:scale-95 cursor-pointer"
+                title="Install Purity Matters on your device"
+              >
+                <Download className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Install App</span>
+              </button>
+
+              {/* Mobile Round Button */}
+              <button
+                type="button"
+                id="header-pwa-install-mobile"
+                onClick={installPwa}
+                className="sm:hidden w-8 h-8 rounded-full bg-[#F6CE46] hover:bg-[#ebd534] text-[#202328] flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-2xs"
+                title="Install App"
+                aria-label="Install App"
+              >
+                <Download className="w-3.5 h-3.5 stroke-[2.5]" />
+              </button>
+            </>
+          )}
+
           {onOpenDemographics && (
             <button
               type="button"

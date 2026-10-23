@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
@@ -28,12 +28,6 @@ export default function LoginPage() {
       setErrorMessage(result.error || "Invalid email or password.");
       setIsSubmitting(false);
     }
-  };
-
-  const handleFillDemo = () => {
-    setEmail("admin@puritymatters.org");
-    setPassword("Admin@12345");
-    setErrorMessage(null);
   };
 
   return (
@@ -109,7 +103,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@puritymatters.org"
+                  placeholder="Enter your email"
                   required
                   autoComplete="email"
                   className="w-full h-11 pl-11 pr-4 rounded-full border border-black/15 bg-white text-sm text-[#202328] placeholder:text-neutral-500 focus:outline-none focus:border-[#202328] focus:ring-2 focus:ring-[#F6CE46]/50 transition-all shadow-2xs"
@@ -174,25 +168,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Pill Helper */}
-          <div
-            id="demo-credentials-container"
-            className="mt-6 pt-5 border-t border-black/[0.07] flex flex-col items-center gap-2"
-          >
-            <p className="text-[11px] text-neutral-500">
-              Quick development credentials:
-            </p>
-            <button
-              type="button"
-              id="fill-demo-credentials-button"
-              onClick={handleFillDemo}
-              className="px-3.5 py-1.5 rounded-full border border-black/10 bg-black/[0.03] hover:bg-black/[0.06] text-xs font-medium text-[#202328] flex items-center gap-1.5 transition-all cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#D4A818]" />
-              <span>Fill Default Admin Credentials</span>
-            </button>
-          </div>
         </div>
 
         {/* Footer Security Note */}
