@@ -66,6 +66,8 @@ export function ResourcesTable() {
     isCatalogLoading,
     isOrdersLoading,
     isResourceOrdersLoading,
+    syncWithRemoteBackend,
+    isRefreshing,
     apiUrl,
   } = useAdminData();
 
@@ -195,7 +197,7 @@ export function ResourcesTable() {
       },
       {
         value: "orders",
-        label: `Orders (${resourceOrders.length})`,
+        label: `Orders (${resourceOrders.length})${pendingVerificationCount > 0 ? ` • ${pendingVerificationCount} new` : ""}`,
         icon: <ShoppingBag className="w-3.5 h-3.5 text-[#F6CE46]" />,
       },
       {
@@ -204,7 +206,7 @@ export function ResourcesTable() {
         icon: <Truck className="w-3.5 h-3.5 text-[#F6CE46]" />,
       },
     ],
-    [resourceCatalog.length, resourceOrders.length, physicalBookOrders.length]
+    [resourceCatalog.length, resourceOrders.length, physicalBookOrders.length, pendingVerificationCount]
   );
 
   // Status and type filter options for CustomDropdown
@@ -384,6 +386,20 @@ export function ResourcesTable() {
             {/* Action Buttons: strictly single-word with + */}
             <div className="flex items-center gap-2 shrink-0">
               <AddResourceModal />
+              {/* Manual live sync button */}
+              <Button
+                type="button"
+                id="btn-sync-resources"
+                size="sm"
+                variant="outline"
+                onClick={() => syncWithRemoteBackend(true)}
+                disabled={isRefreshing}
+                className="bg-white/80 border border-black/10 hover:bg-neutral-100 rounded-full h-9 px-3 text-xs text-[#202328] font-medium flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                title="Sync live records from backend"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-neutral-600 ${isRefreshing ? "animate-spin text-[#202328]" : ""}`} />
+                <span className="hidden sm:inline">Sync</span>
+              </Button>
               {/* Desktop gear icon */}
               <div className="hidden sm:block">
                 <PaymentSettingsModal />

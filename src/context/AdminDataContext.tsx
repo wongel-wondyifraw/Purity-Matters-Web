@@ -205,6 +205,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const ordersQuery = useQuery({
     queryKey: ["admin", "physical-orders"],
     queryFn: fetchPhysicalBookOrdersApi,
+    refetchInterval: 3000,
+    refetchIntervalInBackground: false,
   });
 
   const usersQuery = useQuery({
@@ -225,6 +227,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const resourceOrdersQuery = useQuery<ResourceOrderRecord[]>({
     queryKey: ["admin", "resource-orders"],
     queryFn: () => fetchResourceOrdersApi(),
+    refetchInterval: 3000,
+    refetchIntervalInBackground: false,
   });
 
   const isClientsLoading = clientsQuery.isLoading;
@@ -522,9 +526,19 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
   const confirmOrderMutation = useMutation({
     mutationFn: ({ id, notes }: { id: number; notes?: string }) => confirmResourceOrderPaymentApi(id, notes),
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "resource-orders"] });
-      toast.success("Order Confirmed & Delivered", "The resource file has been dispatched to the client via Telegram Bot.");
+      if (data && data.dispatched === false && data.dispatchError) {
+        toast.warning(
+          "Payment Confirmed",
+          `Payment verified, but document dispatch had an issue: ${data.dispatchError}`
+        );
+      } else {
+        toast.success(
+          "Order Confirmed & Delivered",
+          "The resource file has been dispatched to the client via Telegram Bot."
+        );
+      }
     },
     onError: (err: any) => {
       toast.error("Fulfillment Error", err.message || "Failed to confirm payment or dispatch file.");
