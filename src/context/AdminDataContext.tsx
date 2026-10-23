@@ -133,7 +133,12 @@ export interface AdminDataContextType {
     id: number,
     status: InnerHealingRecord["status"]
   ) => Promise<void>;
-  answerAnonymousQuestion: (id: number, answerText: string, assignedCounselor?: string) => Promise<void>;
+  answerAnonymousQuestion: (
+    id: number,
+    answerText: string,
+    assignedCounselor?: string,
+    postToChannel?: boolean
+  ) => Promise<void>;
   deleteAnonymousQuestion: (id: number) => Promise<boolean>;
   addResource: (payload: NewResourcePayload) => Promise<boolean>;
   updateResource: (
@@ -492,21 +497,36 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       answer,
       assignedCounselor,
       isPublic,
+      postToChannel,
     }: {
       id: number;
       answer: string;
       assignedCounselor?: string;
       isPublic?: boolean;
-    }) => answerAnonymousQuestionApi(id, answer, assignedCounselor, isPublic),
+      postToChannel?: boolean;
+    }) => answerAnonymousQuestionApi(id, answer, assignedCounselor, isPublic, postToChannel),
     onSuccess: (updated) => {
       queryClient.setQueryData<AnonymousQuestionRecord[]>(["admin", "questions"], (old = []) =>
         old.map((q) => (q.id === updated.id ? updated : q))
       );
       queryClient.invalidateQueries({ queryKey: ["admin", "questions"] });
-      toast.success(
-        "Response Sent",
-        `Anonymous pastoral response dispatched for Question #${updated.referenceNumber || updated.id}.`
-      );
+
+      if (updated.channelBroadcast?.success) {
+        toast.success(
+          "Broadcast to Channel",
+          `Response for Question #${updated.referenceNumber} published to Telegram channel.`
+        );
+      } else if (updated.channelBroadcast?.error) {
+        toast.info(
+          "Channel Notice",
+          `Answer saved. Channel broadcast note: ${updated.channelBroadcast.error}`
+        );
+      } else {
+        toast.success(
+          "Response Saved",
+          `Pastoral response saved for Question #${updated.referenceNumber || updated.id}.`
+        );
+      }
     },
     onError: (err: any) => {
       toast.error("Answer Failed", err.message || "Failed to dispatch response.");
@@ -749,13 +769,19 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   );
 
   const answerAnonymousQuestion = useCallback(
-    async (id: number, answerText: string, assignedCounselor?: string) => {
+    async (
+      id: number,
+      answerText: string,
+      assignedCounselor?: string,
+      postToChannel: boolean = false
+    ) => {
       if (!answerText.trim()) return;
       try {
         await answerQuestionMutation.mutateAsync({
           id,
           answer: answerText.trim(),
           assignedCounselor: assignedCounselor || "Admin Pastoral Care",
+          postToChannel,
         });
       } catch {}
     },

@@ -540,12 +540,13 @@ export async function answerAnonymousQuestionApi(
   id: number,
   answer: string,
   assignedCounselor?: string,
-  isPublic: boolean = true
-): Promise<AnonymousQuestionRecord> {
+  isPublic: boolean = true,
+  postToChannel: boolean = false
+): Promise<AnonymousQuestionRecord & { channelBroadcast?: { success: boolean; messageId?: number; error?: string } | null }> {
   const res = await fetch(`${getApiUrl()}/api/admin/questions/${id}/answer`, {
     method: "PATCH",
     headers: getAuthHeaders(),
-    body: JSON.stringify({ answer, assignedCounselor, isPublic }),
+    body: JSON.stringify({ answer, assignedCounselor, isPublic, postToChannel }),
   });
   if (!res.ok) {
     let errMessage = `Failed to answer question #${id}`;
@@ -566,6 +567,10 @@ export async function answerAnonymousQuestionApi(
     answer: q.answer,
     answeredAt: formatDateTime(q.answeredAt),
     assignedCounselor: q.assignedCounselor,
+    postedToChannel: q.postedToChannel,
+    telegramMessageId: q.telegramMessageId,
+    postedToChannelAt: q.postedToChannelAt ? formatDateTime(q.postedToChannelAt) : undefined,
+    channelBroadcast: q.channelBroadcast,
   };
 }
 

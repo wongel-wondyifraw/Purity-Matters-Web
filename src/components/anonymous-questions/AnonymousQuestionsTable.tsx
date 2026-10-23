@@ -58,6 +58,7 @@ export function AnonymousQuestionsTable() {
   const [selectedQuestion, setSelectedQuestion] =
     useState<AnonymousQuestionRecord | null>(null);
   const [answerDraft, setAnswerDraft] = useState<string>("");
+  const [postToChannel, setPostToChannel] = useState<boolean>(true);
   const [questionToDelete, setQuestionToDelete] =
     useState<AnonymousQuestionRecord | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -98,11 +99,17 @@ export function AnonymousQuestionsTable() {
   const handleOpenAnswer = (q: AnonymousQuestionRecord) => {
     setSelectedQuestion(q);
     setAnswerDraft(q.answer || "");
+    setPostToChannel(!q.postedToChannel);
   };
 
   const handleSendAnswer = () => {
     if (!selectedQuestion || !answerDraft.trim()) return;
-    answerAnonymousQuestion(selectedQuestion.id, answerDraft.trim(), counselorName);
+    answerAnonymousQuestion(
+      selectedQuestion.id,
+      answerDraft.trim(),
+      counselorName,
+      postToChannel
+    );
     setSelectedQuestion(null);
     setAnswerDraft("");
   };
@@ -246,17 +253,25 @@ export function AnonymousQuestionsTable() {
                         {q.submittedAt}
                       </TableCell>
                       <TableCell>
-                        {q.status === "answered" ? (
-                          <span className="inline-flex items-center gap-1.5 bg-[#F6CE46]/25 border border-[#F6CE46]/40 text-[#202328] text-xs font-semibold px-2.5 py-1 rounded-full shadow-2xs">
-                            <CheckCircle2 className="w-3 h-3 text-[#202328]" />
-                            <span>Answered</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 bg-neutral-100 border border-black/10 text-neutral-600 text-xs font-semibold px-2.5 py-1 rounded-full shadow-2xs">
-                            <Clock className="w-3 h-3 text-neutral-500" />
-                            <span>Pending</span>
-                          </span>
-                        )}
+                        <div className="flex flex-col gap-1 items-start">
+                          {q.status === "answered" ? (
+                            <span className="inline-flex items-center gap-1.5 bg-[#F6CE46]/25 border border-[#F6CE46]/40 text-[#202328] text-xs font-semibold px-2.5 py-1 rounded-full shadow-2xs">
+                              <CheckCircle2 className="w-3 h-3 text-[#202328]" />
+                              <span>Answered</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 bg-neutral-100 border border-black/10 text-neutral-600 text-xs font-semibold px-2.5 py-1 rounded-full shadow-2xs">
+                              <Clock className="w-3 h-3 text-neutral-500" />
+                              <span>Pending</span>
+                            </span>
+                          )}
+                          {q.postedToChannel && (
+                            <span className="inline-flex items-center gap-1 bg-blue-50 border border-blue-200 text-[#0088cc] text-[10px] font-bold px-2 py-0.5 rounded-full">
+                              <Send className="w-2.5 h-2.5" />
+                              <span>Channel</span>
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right px-4">
                         <div className="flex items-center justify-end gap-1.5">
@@ -322,6 +337,30 @@ export function AnonymousQuestionsTable() {
                                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                                       setAnswerDraft(e.target.value)
                                     }
+                                  />
+                                </div>
+
+                                {/* Telegram Channel Broadcast Option */}
+                                <div className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl flex items-center justify-between gap-3">
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="w-7 h-7 rounded-lg bg-[#0088cc]/10 flex items-center justify-center text-[#0088cc] shrink-0">
+                                      <Send className="w-3.5 h-3.5" />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-bold text-[#202328] truncate">
+                                        Broadcast to Telegram Channel
+                                      </p>
+                                      <p className="text-[10px] text-neutral-500 truncate">
+                                        Publish formatted question & pastoral counsel tagged with topic
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <input
+                                    type="checkbox"
+                                    id={`broadcast-channel-${q.id}`}
+                                    checked={postToChannel}
+                                    onChange={(e) => setPostToChannel(e.target.checked)}
+                                    className="w-4 h-4 rounded text-[#202328] accent-[#202328] cursor-pointer shrink-0"
                                   />
                                 </div>
 

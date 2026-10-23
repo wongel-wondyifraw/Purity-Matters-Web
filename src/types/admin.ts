@@ -95,6 +95,9 @@ export interface AnonymousQuestionRecord {
   answer?: string;
   answeredAt?: string;
   assignedCounselor?: string;
+  postedToChannel?: boolean;
+  telegramMessageId?: number | null;
+  postedToChannelAt?: string;
 }
 
 export interface ResourceCatalogItem {
