@@ -9,6 +9,7 @@ import {
   Send,
   ShieldAlert,
   Trash2,
+  RefreshCw,
 } from "lucide-react";
 import {
   Card,
@@ -50,6 +51,7 @@ export function AnonymousQuestionsTable() {
     deleteAnonymousQuestion,
     isQuestionsLoading,
     syncWithRemoteBackend,
+    hardRefresh,
     isRefreshing,
   } = useAdminData();
   const { user } = useAuth();
@@ -156,6 +158,24 @@ export function AnonymousQuestionsTable() {
               className="shrink-0 flex-1 sm:flex-none"
               triggerClassName="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs h-9"
             />
+
+            {/* Quick Hard Refresh Button */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => hardRefresh()}
+              disabled={isRefreshing}
+              className="bg-white/80 border-black/10 rounded-full h-9 px-3 text-xs text-[#202328] hover:bg-white shadow-2xs cursor-pointer flex items-center gap-1.5"
+              title="Hard refresh questions from live server"
+            >
+              <RefreshCw
+                className={`w-3.5 h-3.5 ${
+                  isRefreshing ? "animate-spin text-[#F6CE46]" : "text-[#202328]"
+                }`}
+              />
+              <span className="hidden sm:inline">Refresh</span>
+            </Button>
           </div>
         </div>
       </CardHeader>

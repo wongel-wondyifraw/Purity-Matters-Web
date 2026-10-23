@@ -4,6 +4,7 @@ import React, {
   createContext,
   useContext,
   useState,
+  useEffect,
   useCallback,
   useMemo,
   ReactNode,
@@ -26,6 +27,7 @@ import {
 } from "@/types/admin";
 import { ConsoleUser } from "@/types/auth";
 import { useToast } from "@/components/ui/toast";
+import { triggerHaptic } from "@/lib/haptic";
 import {
   getApiUrl,
   fetchClientsApi,
@@ -119,6 +121,7 @@ export interface AdminDataContextType {
 
   // Mutations & Actions
   syncWithRemoteBackend: (manual?: boolean) => Promise<void>;
+  hardRefresh: () => Promise<void>;
   addClient: (payload: NewClientPayload) => Promise<boolean>;
   updateClient: (id: number, data: Partial<ClientRecord>) => Promise<boolean>;
   deleteClient: (id: number) => Promise<boolean>;
@@ -175,33 +178,50 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
+  // Active window resume & PWA visibility synchronization
+  useEffect(() => {
+    const handleResume = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        queryClient.invalidateQueries({ queryKey: ["admin"], refetchType: "all" });
+      }
+    };
+    window.addEventListener("focus", handleResume);
+    document.addEventListener("visibilitychange", handleResume);
+    window.addEventListener("online", handleResume);
+    return () => {
+      window.removeEventListener("focus", handleResume);
+      document.removeEventListener("visibilitychange", handleResume);
+      window.removeEventListener("online", handleResume);
+    };
+  }, [queryClient]);
+
   // =================== TANSTACK QUERIES ===================
 
   const clientsQuery = useQuery({
     queryKey: ["admin", "clients"],
     queryFn: fetchClientsApi,
-    refetchInterval: 10000,
-    refetchIntervalInBackground: false,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   });
 
   const counselingQuery = useQuery({
     queryKey: ["admin", "counseling"],
     queryFn: fetchCounselingApi,
-    refetchInterval: 8000,
-    refetchIntervalInBackground: false,
+    refetchInterval: 4000,
+    refetchIntervalInBackground: true,
   });
 
   const innerHealingQuery = useQuery({
     queryKey: ["admin", "inner-healing"],
     queryFn: fetchInnerHealingApi,
-    refetchInterval: 10000,
-    refetchIntervalInBackground: false,
+    refetchInterval: 4000,
+    refetchIntervalInBackground: true,
   });
 
   const coursesQuery = useQuery({
     queryKey: ["admin", "courses"],
     queryFn: fetchCoursesApi,
-    refetchInterval: 20000,
+    refetchInterval: 15000,
     refetchIntervalInBackground: false,
   });
 
@@ -209,13 +229,13 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     queryKey: ["admin", "resource-sales"],
     queryFn: fetchResourceSalesApi,
     refetchInterval: 5000,
-    refetchIntervalInBackground: false,
+    refetchIntervalInBackground: true,
   });
 
   const catalogQuery = useQuery({
     queryKey: ["admin", "resource-catalog"],
     queryFn: fetchResourceCatalogApi,
-    refetchInterval: 20000,
+    refetchInterval: 15000,
     refetchIntervalInBackground: false,
   });
 
@@ -223,27 +243,27 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     queryKey: ["admin", "physical-orders"],
     queryFn: fetchPhysicalBookOrdersApi,
     refetchInterval: 3000,
-    refetchIntervalInBackground: false,
+    refetchIntervalInBackground: true,
   });
 
   const usersQuery = useQuery({
     queryKey: ["admin", "users"],
     queryFn: fetchSystemUsersApi,
-    refetchInterval: 30000,
+    refetchInterval: 25000,
     refetchIntervalInBackground: false,
   });
 
   const questionsQuery = useQuery({
     queryKey: ["admin", "questions"],
     queryFn: fetchAnonymousQuestionsApi,
-    refetchInterval: 10000,
-    refetchIntervalInBackground: false,
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
   });
 
   const paymentSettingsQuery = useQuery({
     queryKey: ["admin", "payment-settings"],
     queryFn: fetchPaymentSettingsApi,
-    refetchInterval: 60000,
+    refetchInterval: 45000,
     refetchIntervalInBackground: false,
   });
 
@@ -251,7 +271,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     queryKey: ["admin", "resource-orders"],
     queryFn: () => fetchResourceOrdersApi(),
     refetchInterval: 3000,
-    refetchIntervalInBackground: false,
+    refetchIntervalInBackground: true,
   });
 
   const isClientsLoading = clientsQuery.isLoading;
@@ -321,11 +341,14 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
   const deleteClientMutation = useMutation({
     mutationFn: deleteClientApi,
-    onSuccess: (_, id) => {
+    onSuccess: async (_, id) => {
       queryClient.setQueryData<ClientRecord[]>(["admin", "clients"], (old = []) =>
         old.filter((c) => c.id !== id)
       );
-      queryClient.invalidateQueries({ queryKey: ["admin", "clients"] });
+      await queryClient.refetchQueries({ queryKey: ["admin", "clients"] });
+      queryClient.setQueryData<ClientRecord[]>(["admin", "clients"], (latest = []) =>
+        latest.filter((c) => c.id !== id)
+      );
       toast.success("Client Deleted", `Client #${id} deleted.`);
     },
     onError: (err: any) => {
@@ -388,11 +411,14 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
   const deleteCounselingMutation = useMutation({
     mutationFn: deleteCounselingApi,
-    onSuccess: (_, id) => {
+    onSuccess: async (_, id) => {
       queryClient.setQueryData<CounselingRecord[]>(["admin", "counseling"], (old = []) =>
         old.filter((r) => r.id !== id)
       );
-      queryClient.invalidateQueries({ queryKey: ["admin", "counseling"] });
+      await queryClient.refetchQueries({ queryKey: ["admin", "counseling"] });
+      queryClient.setQueryData<CounselingRecord[]>(["admin", "counseling"], (latest = []) =>
+        latest.filter((r) => r.id !== id)
+      );
       toast.success("Request Deleted", `Counseling request #${id} has been permanently deleted.`);
     },
     onError: (err: any) => {
@@ -449,11 +475,14 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
   const deleteResourceMutation = useMutation({
     mutationFn: deleteResourceApi,
-    onSuccess: (_, id) => {
+    onSuccess: async (_, id) => {
       queryClient.setQueryData<ResourceCatalogItem[]>(["admin", "resource-catalog"], (old = []) =>
         old.filter((r) => r.id !== id)
       );
-      queryClient.invalidateQueries({ queryKey: ["admin", "resource-catalog"] });
+      await queryClient.refetchQueries({ queryKey: ["admin", "resource-catalog"] });
+      queryClient.setQueryData<ResourceCatalogItem[]>(["admin", "resource-catalog"], (latest = []) =>
+        latest.filter((r) => r.id !== id)
+      );
       toast.success("Resource Removed", `Resource #${id} permanently deleted.`);
     },
     onError: (err: any) => {
@@ -535,11 +564,14 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
   const deleteQuestionMutation = useMutation({
     mutationFn: deleteAnonymousQuestionApi,
-    onSuccess: (_, id) => {
+    onSuccess: async (_, id) => {
       queryClient.setQueryData<AnonymousQuestionRecord[]>(["admin", "questions"], (old = []) =>
         old.filter((q) => q.id !== id)
       );
-      queryClient.invalidateQueries({ queryKey: ["admin", "questions"] });
+      await queryClient.refetchQueries({ queryKey: ["admin", "questions"] });
+      queryClient.setQueryData<AnonymousQuestionRecord[]>(["admin", "questions"], (latest = []) =>
+        latest.filter((q) => q.id !== id)
+      );
       toast.success(
         "Question Deleted",
         `Anonymous question #${id} permanently deleted.`
@@ -596,11 +628,14 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
   const deletePhysicalOrderMutation = useMutation({
     mutationFn: deletePhysicalOrderApi,
-    onSuccess: (_, id) => {
+    onSuccess: async (_, id) => {
       queryClient.setQueryData<PhysicalBookOrderItem[]>(["admin", "physical-orders"], (old = []) =>
         old.filter((o) => o.id !== id)
       );
-      queryClient.invalidateQueries({ queryKey: ["admin", "physical-orders"] });
+      await queryClient.refetchQueries({ queryKey: ["admin", "physical-orders"] });
+      queryClient.setQueryData<PhysicalBookOrderItem[]>(["admin", "physical-orders"], (latest = []) =>
+        latest.filter((o) => o.id !== id)
+      );
       queryClient.invalidateQueries({ queryKey: ["admin", "resource-sales"] });
       toast.success("Order Deleted", `Shipping order #${id} deleted.`);
     },
@@ -611,11 +646,14 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
   const deleteResourceOrderMutation = useMutation({
     mutationFn: deleteResourceOrderApi,
-    onSuccess: (_, id) => {
+    onSuccess: async (_, id) => {
       queryClient.setQueryData<ResourceOrderRecord[]>(["admin", "resource-orders"], (old = []) =>
         old.filter((o) => o.id !== id)
       );
-      queryClient.invalidateQueries({ queryKey: ["admin", "resource-orders"] });
+      await queryClient.refetchQueries({ queryKey: ["admin", "resource-orders"] });
+      queryClient.setQueryData<ResourceOrderRecord[]>(["admin", "resource-orders"], (latest = []) =>
+        latest.filter((o) => o.id !== id)
+      );
       toast.success("Order Deleted", `Resource order #${id} deleted.`);
     },
     onError: (err: any) => {
@@ -643,6 +681,44 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     },
     [queryClient, toast]
   );
+
+  /**
+   * Hard Refresh: Bypasses all caches, triggers tactile haptic feedback,
+   * purges in-memory queries, and fetches fresh live data from the backend.
+   */
+  const hardRefresh = useCallback(async () => {
+    triggerHaptic("medium");
+    setIsRefreshing(true);
+    try {
+      // 1. Purge browser CacheStorage (service worker caches) if present
+      if (typeof window !== "undefined" && "caches" in window) {
+        try {
+          const cacheKeys = await window.caches.keys();
+          await Promise.all(cacheKeys.map((k) => window.caches.delete(k)));
+        } catch {}
+      }
+      // 2. Cancel any pending in-flight queries
+      await queryClient.cancelQueries({ queryKey: ["admin"] });
+      // 3. Completely purge in-memory query cache entries
+      queryClient.removeQueries({ queryKey: ["admin"] });
+      // 4. Force fresh live refetch from network with cache-busting
+      await queryClient.refetchQueries({
+        queryKey: ["admin"],
+        type: "all",
+        exact: false,
+      });
+      triggerHaptic("success");
+      toast.success(
+        "Live Data Refreshed",
+        "Loaded latest bot registrations, anonymous questions, and orders."
+      );
+    } catch (err: any) {
+      triggerHaptic("warning");
+      toast.error("Refresh Issue", err.message || "Failed to load latest records.");
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [queryClient, toast]);
 
   const addClient = useCallback(
     async (payload: NewClientPayload): Promise<boolean> => {
@@ -1038,6 +1114,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       coursesCount,
       resourceCount,
       syncWithRemoteBackend,
+      hardRefresh,
       addClient,
       updateClient,
       deleteClient,
@@ -1102,6 +1179,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       coursesCount,
       resourceCount,
       syncWithRemoteBackend,
+      hardRefresh,
       addClient,
       updateClient,
       deleteClient,

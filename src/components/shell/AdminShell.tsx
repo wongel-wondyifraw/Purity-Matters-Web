@@ -8,6 +8,7 @@ import { AppHeader } from "@/components/shell/AppHeader";
 import { AppHero } from "@/components/shell/AppHero";
 import { MobileBottomNav } from "@/components/shell/MobileBottomNav";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { useAdminData } from "@/context/AdminDataContext";
 import { useAuth } from "@/context/AuthContext";
 
@@ -17,6 +18,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [isMobileDemographicsOpen, setIsMobileDemographicsOpen] = useState(false);
   const {
     isLoading,
+    isRefreshing,
+    hardRefresh,
     totalClients,
     verifiedClients,
     ethiopianClients,
@@ -73,13 +76,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
           id="admin-main"
           className="flex-1 flex flex-col min-h-0 w-full p-3.5 sm:p-4 lg:p-6 gap-3.5 lg:gap-4 overflow-y-auto overflow-x-hidden no-scrollbar lg:overflow-hidden pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] lg:pb-6 overscroll-contain"
         >
-          <div className="shrink-0">
-            <AppHero />
-          </div>
+          <PullToRefresh onRefresh={hardRefresh} isRefreshing={isRefreshing}>
+            <div className="shrink-0 mb-3.5 lg:mb-4">
+              <AppHero />
+            </div>
 
-          <div className="flex-1 flex flex-col min-h-0 w-full overflow-visible lg:overflow-hidden">
-            {children}
-          </div>
+            <div className="flex-1 flex flex-col min-h-0 w-full overflow-visible lg:overflow-hidden">
+              {children}
+            </div>
+          </PullToRefresh>
         </main>
 
         {/* MOBILE BOTTOM NAVIGATION BAR */}

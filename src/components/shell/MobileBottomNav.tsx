@@ -29,7 +29,7 @@ interface MobileBottomNavProps {
 export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { counselingCount, syncWithRemoteBackend, isRefreshing } = useAdminData();
+  const { counselingCount, syncWithRemoteBackend, hardRefresh, isRefreshing } = useAdminData();
   const { logout, user } = useAuth();
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
@@ -51,7 +51,7 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
 
   const handleSync = async () => {
     setIsMoreMenuOpen(false);
-    await syncWithRemoteBackend(true);
+    await hardRefresh();
   };
 
   const handleDemographicsClick = () => {

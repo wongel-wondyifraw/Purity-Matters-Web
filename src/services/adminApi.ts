@@ -38,7 +38,11 @@ export const getAuthToken = () =>
 
 export const getAuthHeaders = (isFormData: boolean = false): HeadersInit => {
   const token = getAuthToken();
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
+  };
   if (!isFormData) {
     headers["Content-Type"] = "application/json";
   }
@@ -47,6 +51,40 @@ export const getAuthHeaders = (isFormData: boolean = false): HeadersInit => {
   }
   return headers;
 };
+
+/**
+ * Universal cache-busting fetch wrapper for all Web Console admin requests.
+ * Ensures zero caching from browser, proxy, or PWA service worker so newly
+ * submitted bot records, anonymous questions, and orders appear instantly.
+ */
+export async function adminFetch(
+  endpointOrUrl: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  const base = getApiUrl();
+  const rawUrl = endpointOrUrl.startsWith("http")
+    ? endpointOrUrl
+    : `${base}${endpointOrUrl.startsWith("/") ? endpointOrUrl : `/${endpointOrUrl}`}`;
+
+  let finalUrl = rawUrl;
+  const method = (options.method || "GET").toUpperCase();
+  if (method === "GET") {
+    const separator = finalUrl.includes("?") ? "&" : "?";
+    finalUrl = `${finalUrl}${separator}_t=${Date.now()}`;
+  }
+
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+  const authHeaders = getAuthHeaders(isFormData);
+
+  return fetch(finalUrl, {
+    ...options,
+    cache: "no-store",
+    headers: {
+      ...authHeaders,
+      ...(options.headers || {}),
+    },
+  });
+}
 
 export const formatDateTime = (dateVal: string | Date | undefined) => {
   if (!dateVal) return "N/A";
@@ -63,9 +101,7 @@ export const formatDateTime = (dateVal: string | Date | undefined) => {
 // =================== FETCHERS ===================
 
 export async function fetchClientsApi(): Promise<ClientRecord[]> {
-  const res = await fetch(`${getApiUrl()}/api/admin/clients`, {
-    headers: getAuthHeaders(),
-  });
+  const res = await adminFetch("/api/admin/clients");
   if (!res.ok) throw new Error(`Failed to fetch clients: ${res.statusText}`);
   const data = await res.json();
   if (!Array.isArray(data)) return [];
@@ -97,9 +133,7 @@ export async function fetchClientsApi(): Promise<ClientRecord[]> {
 }
 
 export async function fetchCounselingApi(): Promise<CounselingRecord[]> {
-  const res = await fetch(`${getApiUrl()}/api/admin/counseling`, {
-    headers: getAuthHeaders(),
-  });
+  const res = await adminFetch("/api/admin/counseling");
   if (!res.ok) throw new Error(`Failed to fetch counseling: ${res.statusText}`);
   const data = await res.json();
   if (!Array.isArray(data)) return [];
@@ -121,9 +155,7 @@ export async function fetchCounselingApi(): Promise<CounselingRecord[]> {
 }
 
 export async function fetchInnerHealingApi(): Promise<InnerHealingRecord[]> {
-  const res = await fetch(`${getApiUrl()}/api/admin/inner-healing`, {
-    headers: getAuthHeaders(),
-  });
+  const res = await adminFetch("/api/admin/inner-healing");
   if (!res.ok) return [];
   const data = await res.json();
   if (!Array.isArray(data)) return [];
@@ -140,9 +172,7 @@ export async function fetchInnerHealingApi(): Promise<InnerHealingRecord[]> {
 }
 
 export async function fetchCoursesApi(): Promise<CourseProgressRecord[]> {
-  const res = await fetch(`${getApiUrl()}/api/admin/courses`, {
-    headers: getAuthHeaders(),
-  });
+  const res = await adminFetch("/api/admin/courses");
   if (!res.ok) return [];
   const data = await res.json();
   if (!Array.isArray(data)) return [];
@@ -165,9 +195,7 @@ export async function fetchCoursesApi(): Promise<CourseProgressRecord[]> {
 }
 
 export async function fetchResourceSalesApi(): Promise<ResourceSaleRecord[]> {
-  const res = await fetch(`${getApiUrl()}/api/admin/resources`, {
-    headers: getAuthHeaders(),
-  });
+  const res = await adminFetch("/api/admin/resources");
   if (!res.ok) return [];
   const data = await res.json();
   if (!Array.isArray(data)) return [];
@@ -185,9 +213,7 @@ export async function fetchResourceSalesApi(): Promise<ResourceSaleRecord[]> {
 }
 
 export async function fetchResourceCatalogApi(): Promise<ResourceCatalogItem[]> {
-  const res = await fetch(`${getApiUrl()}/api/admin/resources/catalog`, {
-    headers: getAuthHeaders(),
-  });
+  const res = await adminFetch("/api/admin/resources/catalog");
   if (!res.ok) return [];
   const data = await res.json();
   if (!Array.isArray(data)) return [];
@@ -213,9 +239,7 @@ export async function fetchResourceCatalogApi(): Promise<ResourceCatalogItem[]> 
 }
 
 export async function fetchPhysicalBookOrdersApi(): Promise<PhysicalBookOrderItem[]> {
-  const res = await fetch(`${getApiUrl()}/api/admin/resources/orders`, {
-    headers: getAuthHeaders(),
-  });
+  const res = await adminFetch("/api/admin/resources/orders");
   if (!res.ok) return [];
   const data = await res.json();
   if (!Array.isArray(data)) return [];
@@ -242,18 +266,14 @@ export async function fetchPhysicalBookOrdersApi(): Promise<PhysicalBookOrderIte
 }
 
 export async function fetchSystemUsersApi(): Promise<ConsoleUser[]> {
-  const res = await fetch(`${getApiUrl()}/api/users`, {
-    headers: getAuthHeaders(),
-  });
+  const res = await adminFetch("/api/users");
   if (!res.ok) return [];
   const data = await res.json();
   return Array.isArray(data) ? data : [];
 }
 
 export async function fetchAnonymousQuestionsApi(): Promise<AnonymousQuestionRecord[]> {
-  const res = await fetch(`${getApiUrl()}/api/admin/questions`, {
-    headers: getAuthHeaders(),
-  });
+  const res = await adminFetch("/api/admin/questions");
   if (!res.ok) return [];
   const data = await res.json();
   if (!Array.isArray(data)) return [];
@@ -286,9 +306,8 @@ export async function createClientApi(payload: NewClientPayload): Promise<Client
     isRegistered: payload.isRegistered ?? true,
   };
 
-  const res = await fetch(`${getApiUrl()}/api/admin/clients`, {
+  const res = await adminFetch("/api/admin/clients", {
     method: "POST",
-    headers: getAuthHeaders(),
     body: JSON.stringify(formattedPayload),
   });
 
@@ -320,26 +339,23 @@ export async function createClientApi(payload: NewClientPayload): Promise<Client
 }
 
 export async function updateClientApi(id: number, data: Partial<ClientRecord>): Promise<void> {
-  const res = await fetch(`${getApiUrl()}/api/admin/clients/${id}`, {
+  const res = await adminFetch(`/api/admin/clients/${id}`, {
     method: "PATCH",
-    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error(`Failed to update client #${id}`);
 }
 
 export async function deleteClientApi(id: number): Promise<void> {
-  const res = await fetch(`${getApiUrl()}/api/admin/clients/${id}`, {
+  const res = await adminFetch(`/api/admin/clients/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
   });
   if (!res.ok && res.status !== 404) throw new Error(`Failed to delete client #${id}`);
 }
 
 export async function createCounselingApi(payload: NewCounselingPayload): Promise<CounselingRecord> {
-  const res = await fetch(`${getApiUrl()}/api/admin/counseling`, {
+  const res = await adminFetch("/api/admin/counseling", {
     method: "POST",
-    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -373,18 +389,16 @@ export async function updateCounselingStatusApi(
   status: CounselingRecord["status"],
   assignedTo?: string
 ): Promise<void> {
-  const res = await fetch(`${getApiUrl()}/api/admin/counseling/${id}`, {
+  const res = await adminFetch(`/api/admin/counseling/${id}`, {
     method: "PATCH",
-    headers: getAuthHeaders(),
     body: JSON.stringify({ status, assignedTo }),
   });
   if (!res.ok) throw new Error(`Failed to update counseling request #${id}`);
 }
 
 export async function deleteCounselingApi(id: number): Promise<void> {
-  const res = await fetch(`${getApiUrl()}/api/admin/counseling/${id}`, {
+  const res = await adminFetch(`/api/admin/counseling/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
   });
   if (!res.ok && res.status !== 404) throw new Error(`Failed to delete counseling request #${id}`);
 }
@@ -393,9 +407,8 @@ export async function updateInnerHealingStatusApi(
   id: number,
   status: InnerHealingRecord["status"]
 ): Promise<void> {
-  const res = await fetch(`${getApiUrl()}/api/admin/inner-healing/${id}`, {
+  const res = await adminFetch(`/api/admin/inner-healing/${id}`, {
     method: "PATCH",
-    headers: getAuthHeaders(),
     body: JSON.stringify({ status }),
   });
   if (!res.ok) throw new Error(`Failed to update inner healing #${id}`);
@@ -419,9 +432,8 @@ export async function createResourceApi(payload: NewResourcePayload): Promise<Re
     formData.append("file", payload.file);
   }
 
-  const res = await fetch(`${getApiUrl()}/api/admin/resources`, {
+  const res = await adminFetch("/api/admin/resources", {
     method: "POST",
-    headers: getAuthHeaders(true),
     body: formData,
   });
 
@@ -452,8 +464,12 @@ export async function createResourceApi(payload: NewResourcePayload): Promise<Re
     coverImageUrl: created.coverImageUrl || null,
     isActive: created.isActive !== false,
     createdAt: formatDateTime(created.createdAt),
-    updatedAt: formatDateTime(created.updatedAt || created.createdAt),
+    updatedAt: formatDateTime(updatedAtDateTime(created.updatedAt || created.createdAt)),
   };
+}
+
+function updatedAtDateTime(val: any) {
+  return val;
 }
 
 export async function updateResourceApi(
@@ -475,9 +491,8 @@ export async function updateResourceApi(
     formData.append("file", payload.file);
   }
 
-  const res = await fetch(`${getApiUrl()}/api/admin/resources/${id}`, {
+  const res = await adminFetch(`/api/admin/resources/${id}`, {
     method: "PATCH",
-    headers: getAuthHeaders(true),
     body: formData,
   });
 
@@ -513,9 +528,8 @@ export async function updateResourceApi(
 }
 
 export async function deleteResourceApi(id: number): Promise<void> {
-  const res = await fetch(`${getApiUrl()}/api/admin/resources/${id}`, {
+  const res = await adminFetch(`/api/admin/resources/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
   });
   // If the resource is already gone or does not exist on server (404), treat as successfully removed from UI
   if (!res.ok && res.status !== 404) {
@@ -528,9 +542,8 @@ export async function updatePhysicalOrderStatusApi(
   status: PhysicalBookOrderItem["status"],
   dispatchNotes?: string
 ): Promise<void> {
-  const res = await fetch(`${getApiUrl()}/api/admin/resources/orders/${id}/status`, {
+  const res = await adminFetch(`/api/admin/resources/orders/${id}/status`, {
     method: "PATCH",
-    headers: getAuthHeaders(),
     body: JSON.stringify({ status, dispatchNotes }),
   });
   if (!res.ok) throw new Error(`Failed to update order #${id}`);
@@ -543,9 +556,8 @@ export async function answerAnonymousQuestionApi(
   isPublic: boolean = true,
   postToChannel: boolean = false
 ): Promise<AnonymousQuestionRecord & { channelBroadcast?: { success: boolean; messageId?: number; error?: string } | null }> {
-  const res = await fetch(`${getApiUrl()}/api/admin/questions/${id}/answer`, {
+  const res = await adminFetch(`/api/admin/questions/${id}/answer`, {
     method: "PATCH",
-    headers: getAuthHeaders(),
     body: JSON.stringify({ answer, assignedCounselor, isPublic, postToChannel }),
   });
   if (!res.ok) {
@@ -575,9 +587,8 @@ export async function answerAnonymousQuestionApi(
 }
 
 export async function deleteAnonymousQuestionApi(id: number): Promise<void> {
-  const res = await fetch(`${getApiUrl()}/api/admin/questions/${id}`, {
+  const res = await adminFetch(`/api/admin/questions/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
   });
   if (!res.ok && res.status !== 404) throw new Error(`Failed to delete question #${id}`);
 }
@@ -585,9 +596,7 @@ export async function deleteAnonymousQuestionApi(id: number): Promise<void> {
 // =================== PAYMENT SETTINGS (Telebirr & CBE) ===================
 
 export async function fetchPaymentSettingsApi(): Promise<PaymentSettingsResponse> {
-  const res = await fetch(`${getApiUrl()}/api/admin/payment-settings`, {
-    headers: getAuthHeaders(),
-  });
+  const res = await adminFetch("/api/admin/payment-settings");
   if (!res.ok) throw new Error("Failed to load payment account settings");
   return res.json();
 }
@@ -596,9 +605,8 @@ export async function updatePaymentSettingsApi(payload: {
   telebirr?: any;
   cbe?: any;
 }): Promise<PaymentSettingsResponse> {
-  const res = await fetch(`${getApiUrl()}/api/admin/payment-settings`, {
+  const res = await adminFetch("/api/admin/payment-settings", {
     method: "PATCH",
-    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error("Failed to update payment account settings");
@@ -615,10 +623,8 @@ export async function fetchResourceOrdersApi(
   if (status && status !== "all") params.append("status", status);
   if (search) params.append("search", search);
 
-  const res = await fetch(
-    `${getApiUrl()}/api/admin/resource-orders${params.toString() ? `?${params.toString()}` : ""}`,
-    { headers: getAuthHeaders() }
-  );
+  const query = params.toString() ? `?${params.toString()}` : "";
+  const res = await adminFetch(`/api/admin/resource-orders${query}`);
   if (!res.ok) throw new Error("Failed to load resource orders");
   const data = await res.json();
   if (!Array.isArray(data)) return [];
@@ -649,9 +655,8 @@ export async function confirmResourceOrderPaymentApi(
   id: number,
   adminNotes?: string
 ): Promise<{ success: boolean; order: ResourceOrderRecord; dispatched?: boolean; dispatchError?: string }> {
-  const res = await fetch(`${getApiUrl()}/api/admin/resource-orders/${id}/confirm-payment`, {
+  const res = await adminFetch(`/api/admin/resource-orders/${id}/confirm-payment`, {
     method: "POST",
-    headers: getAuthHeaders(),
     body: JSON.stringify({ adminNotes }),
   });
   if (!res.ok) {
@@ -669,9 +674,8 @@ export async function rejectResourceOrderPaymentApi(
   id: number,
   reason?: string
 ): Promise<{ success: boolean; order: ResourceOrderRecord }> {
-  const res = await fetch(`${getApiUrl()}/api/admin/resource-orders/${id}/reject-payment`, {
+  const res = await adminFetch(`/api/admin/resource-orders/${id}/reject-payment`, {
     method: "POST",
-    headers: getAuthHeaders(),
     body: JSON.stringify({ reason }),
   });
   if (!res.ok) {
@@ -686,11 +690,10 @@ export async function rejectResourceOrderPaymentApi(
 }
 
 export async function deletePhysicalOrderApi(id: number): Promise<boolean> {
-  const res = await fetch(`${getApiUrl()}/api/admin/resources/orders/${id}`, {
+  const res = await adminFetch(`/api/admin/resources/orders/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
   });
-  if (!res.ok) {
+  if (!res.ok && res.status !== 404) {
     let msg = `Failed to delete shipping order #${id}`;
     try {
       const err = await res.json();
@@ -702,11 +705,10 @@ export async function deletePhysicalOrderApi(id: number): Promise<boolean> {
 }
 
 export async function deleteResourceOrderApi(id: number): Promise<boolean> {
-  const res = await fetch(`${getApiUrl()}/api/admin/resource-orders/${id}`, {
+  const res = await adminFetch(`/api/admin/resource-orders/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
   });
-  if (!res.ok) {
+  if (!res.ok && res.status !== 404) {
     let msg = `Failed to delete resource order #${id}`;
     try {
       const err = await res.json();

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, ChevronDown, ShieldCheck, Mail, PieChart, Download } from "lucide-react";
+import { LogOut, ChevronDown, ShieldCheck, Mail, PieChart, Download, RefreshCw } from "lucide-react";
 import { useAdminData } from "@/context/AdminDataContext";
 import { useAuth } from "@/context/AuthContext";
 import { usePwa } from "@/context/PwaContext";
@@ -31,7 +31,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
   const pathname = usePathname();
-  const { syncWithRemoteBackend, isRefreshing } = useAdminData();
+  const { syncWithRemoteBackend, hardRefresh, isRefreshing } = useAdminData();
   const { user, logout, getInitials } = useAuth();
   const { isStandalone, installPwa } = usePwa();
 
@@ -156,6 +156,24 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#F6CE46]" />
             </button>
           )}
+
+          {/* Hard Refresh Button (Instant Cache-Busting & Tactile Haptic Feedback) */}
+          <button
+            type="button"
+            id="header-hard-refresh-btn"
+            onClick={() => hardRefresh()}
+            disabled={isRefreshing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 hover:bg-white text-xs font-semibold text-[#202328] border border-black/10 hover:border-black/20 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-60"
+            title="Hard Refresh: Load latest live data"
+            aria-label="Hard Refresh"
+          >
+            <RefreshCw
+              className={`w-3.5 h-3.5 ${
+                isRefreshing ? "animate-spin text-[#F6CE46]" : "text-[#202328]"
+              }`}
+            />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
 
           {/* User Account Flat Indicator & Dropdown */}
           <div className="relative" ref={profileMenuRef}>
