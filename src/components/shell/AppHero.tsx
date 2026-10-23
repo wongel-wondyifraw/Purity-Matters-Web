@@ -18,43 +18,13 @@ export function AppHero() {
   return (
     <section
       id="crextio-hero-section"
-      className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 pb-1 shrink-0"
+      className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-1 shrink-0"
     >
-      {/* Left Side: Welcome Headline & 4-Capsule Segmented Bar */}
-      <div className="space-y-2">
+      {/* Left Side: Welcome Headline */}
+      <div id="crextio-welcome-header">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-normal tracking-tight text-[#202328]">
           {timeGreeting}, {displayName}
         </h1>
-
-        {/* Segmented 4-Capsule Bar with mobile scroll support */}
-        <div
-          id="crextio-segmented-bar"
-          className="flex items-center gap-1.5 pt-1 overflow-x-auto no-scrollbar max-w-full pb-0.5"
-        >
-          <div
-            className="h-8 sm:h-9 px-3 sm:px-4 rounded-full bg-[#202328] text-white flex items-center justify-between text-xs font-semibold shadow-xs shrink-0"
-            style={{ width: "160px" }}
-          >
-            <span>Active</span>
-            <span className="text-[#F6CE46]">58%</span>
-          </div>
-
-          <div
-            className="h-8 sm:h-9 px-3 sm:px-4 rounded-full bg-[#F6CE46] text-[#202328] flex items-center justify-between text-xs font-bold shadow-xs shrink-0"
-            style={{ width: "120px" }}
-          >
-            <span>In Queue</span>
-            <span>26%</span>
-          </div>
-
-          <div
-            className="h-8 sm:h-9 px-3 sm:px-4 rounded-full bg-white text-[#202328] flex items-center justify-between text-xs font-bold shadow-xs border border-black/10 shrink-0"
-            style={{ width: "90px" }}
-          >
-            <span>Done</span>
-            <span>16%</span>
-          </div>
-        </div>
       </div>
 
       {/* Right Side: 3 Giant Stationary Metric Numbers */}

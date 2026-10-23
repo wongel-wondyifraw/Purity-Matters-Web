@@ -53,7 +53,7 @@ export function UsersManagement() {
   const apiUrl = (
     process.env.NEXT_PUBLIC_API_URL ||
     process.env.NEXT_PUBLIC_API ||
-    "http://localhost:3001"
+    "http://localhost:3000"
   ).replace(/\/+$/, "");
 
   const [users, setUsers] = useState<ConsoleUser[]>([]);

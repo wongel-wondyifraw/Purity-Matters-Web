@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const apiUrl = (
     process.env.NEXT_PUBLIC_API_URL ||
     process.env.NEXT_PUBLIC_API ||
-    "http://localhost:3001"
+    "http://localhost:3000"
   ).replace(/\/+$/, "");
 
   // Compute time-aware greeting on client mount to avoid prerender new Date() warnings

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, LogOut, ChevronDown, ShieldCheck, Mail, PieChart } from "lucide-react";
+import { LogOut, ChevronDown, ShieldCheck, Mail, PieChart } from "lucide-react";
 import { useAdminData } from "@/context/AdminDataContext";
 import { useAuth } from "@/context/AuthContext";
 
@@ -110,7 +110,7 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
           })}
         </nav>
 
-        {/* Right: Quick Demographics (mobile), Notifications, User Profile Pill */}
+        {/* Right: Quick Demographics (mobile), User Profile Flat Indicator */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {onOpenDemographics && (
             <button
@@ -119,34 +119,31 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
               onClick={onOpenDemographics}
               aria-label="View Demographics"
               title="Audience Demographics"
-              className="lg:hidden w-8 h-8 rounded-full border border-black/15 bg-white/80 hover:bg-white text-[#202328] flex items-center justify-center transition-all cursor-pointer relative shadow-2xs"
+              className="lg:hidden w-8 h-8 rounded-full border border-neutral-200 bg-white hover:bg-neutral-100 text-[#202328] flex items-center justify-center transition-colors cursor-pointer relative"
             >
               <PieChart className="w-3.5 h-3.5 text-neutral-700" />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#F6CE46]" />
             </button>
           )}
 
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="w-8 h-8 rounded-full border border-black/15 bg-white/80 hover:bg-white text-[#202328] flex items-center justify-center transition-all cursor-pointer relative shadow-2xs"
-          >
-            <Bell className="w-3.5 h-3.5 text-neutral-700" />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#F6CE46]" />
-          </button>
-
-          {/* User Profile Pill & Dropdown */}
+          {/* User Account Flat Indicator & Dropdown */}
           <div className="relative" ref={profileMenuRef}>
             <button
               type="button"
               id="user-profile-button"
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full border border-black/15 bg-white/80 hover:bg-white shadow-2xs transition-all cursor-pointer group"
-              aria-label="User Profile"
+              className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-full bg-neutral-100 hover:bg-neutral-200/80 transition-colors cursor-pointer group"
+              aria-label="User Account"
               aria-expanded={isProfileOpen}
             >
-              <div className="w-7 h-7 rounded-full border border-black/10 bg-[#F6CE46]/35 flex items-center justify-center text-[11px] font-bold text-[#202328] shadow-2xs">
-                <span>{initials}</span>
+              <div className="relative shrink-0">
+                <div className="w-7 h-7 rounded-full bg-[#202328] text-[#F6CE46] flex items-center justify-center text-[11px] font-bold">
+                  <span>{initials}</span>
+                </div>
+                <span
+                  id="user-account-online-indicator"
+                  className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-neutral-100"
+                />
               </div>
               <div className="hidden sm:flex flex-col text-left leading-tight">
                 <span className="text-xs font-semibold text-[#202328]">
@@ -157,7 +154,7 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
                 </span>
               </div>
               <ChevronDown
-                className={`w-3.5 h-3.5 text-neutral-500 transition-transform duration-150 ${
+                className={`w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-700 transition-transform duration-150 ${
                   isProfileOpen ? "rotate-180" : ""
                 }`}
               />
@@ -167,12 +164,15 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
             {isProfileOpen && (
               <div
                 id="user-profile-dropdown"
-                className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#FFFFFD] border border-black/[0.08] p-3.5 shadow-xl shadow-black/10 z-50 animate-in fade-in zoom-in-95 duration-150"
+                className="absolute right-0 mt-2 w-64 rounded-2xl bg-white border border-neutral-200/80 p-3.5 shadow-xl shadow-black/10 z-50 animate-in fade-in zoom-in-95 duration-150"
               >
                 {/* Profile Card Header */}
                 <div className="flex items-center gap-3 pb-3 border-b border-black/[0.06]">
-                  <div className="w-10 h-10 rounded-full border border-black/10 bg-[#F6CE46]/40 flex items-center justify-center text-sm font-bold text-[#202328] shadow-2xs shrink-0">
-                    <span>{initials}</span>
+                  <div className="relative shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-[#202328] text-[#F6CE46] flex items-center justify-center text-sm font-bold">
+                      <span>{initials}</span>
+                    </div>
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold text-[#202328] truncate">
