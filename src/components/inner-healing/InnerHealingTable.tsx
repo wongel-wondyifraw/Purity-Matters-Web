@@ -119,7 +119,7 @@ export function InnerHealingTable() {
                   Client
                 </TableHead>
                 <TableHead className="text-[#202328] font-bold text-xs py-3">
-                  Target Focus Topic
+                  Topic / Issue Description
                 </TableHead>
                 <TableHead className="text-[#202328] font-bold text-xs py-3">
                   Requested At
@@ -189,9 +189,9 @@ export function InnerHealingTable() {
                         {item.phone}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <span className="border border-black/10 text-xs bg-white text-[#202328] font-semibold px-2.5 py-1 rounded-full shadow-2xs">
-                        {item.topic}
+                    <TableCell className="max-w-[300px]">
+                      <span className="inline-block border border-black/10 text-xs bg-white text-[#202328] font-medium px-2.5 py-1 rounded-xl shadow-2xs max-w-full break-words">
+                        {item.topic || "General Inner Healing"}
                       </span>
                     </TableCell>
                     <TableCell className="text-neutral-500 text-xs font-medium">
