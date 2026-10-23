@@ -206,7 +206,7 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
         >
           <div
             id="mobile-more-menu-sheet"
-            className="bg-white rounded-t-3xl border-t border-black/10 shadow-2xl p-5 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-200"
+            className="bg-white rounded-t-3xl border-t border-black/10 shadow-2xl p-5 max-h-[85vh] overflow-y-auto no-scrollbar animate-in slide-in-from-bottom duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Grab Handle */}

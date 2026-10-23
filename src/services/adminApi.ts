@@ -9,6 +9,8 @@ import {
   AnonymousQuestionRecord,
   NewResourcePayload,
   NewCounselingPayload,
+  PaymentSettingsResponse,
+  ResourceOrderRecord,
 } from "@/types/admin";
 import { ConsoleUser } from "@/types/auth";
 
@@ -574,3 +576,139 @@ export async function deleteAnonymousQuestionApi(id: number): Promise<void> {
   });
   if (!res.ok && res.status !== 404) throw new Error(`Failed to delete question #${id}`);
 }
+
+// =================== PAYMENT SETTINGS (Telebirr & CBE) ===================
+
+export async function fetchPaymentSettingsApi(): Promise<PaymentSettingsResponse> {
+  const res = await fetch(`${getApiUrl()}/api/admin/payment-settings`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to load payment account settings");
+  return res.json();
+}
+
+export async function updatePaymentSettingsApi(payload: {
+  telebirr?: any;
+  cbe?: any;
+}): Promise<PaymentSettingsResponse> {
+  const res = await fetch(`${getApiUrl()}/api/admin/payment-settings`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to update payment account settings");
+  return res.json();
+}
+
+// =================== RESOURCE ORDERS & TELEGRAM DISPATCH ===================
+
+export async function fetchResourceOrdersApi(
+  status?: string,
+  search?: string
+): Promise<ResourceOrderRecord[]> {
+  const params = new URLSearchParams();
+  if (status && status !== "all") params.append("status", status);
+  if (search) params.append("search", search);
+
+  const res = await fetch(
+    `${getApiUrl()}/api/admin/resource-orders${params.toString() ? `?${params.toString()}` : ""}`,
+    { headers: getAuthHeaders() }
+  );
+  if (!res.ok) throw new Error("Failed to load resource orders");
+  const data = await res.json();
+  if (!Array.isArray(data)) return [];
+  return data.map((o: any) => ({
+    id: o.id,
+    orderNumber: o.orderNumber,
+    resourceId: o.resourceId,
+    resourceTitle: o.resourceTitle,
+    resourceType: o.resourceType || "ebook",
+    telegramId: String(o.telegramId),
+    clientName: o.clientName || "Telegram Client",
+    username: o.username || null,
+    phone: o.phone || null,
+    amount: Number(o.amount) || 0,
+    currency: o.currency || "ETB",
+    paymentMethod: o.paymentMethod || "telebirr",
+    paymentReference: o.paymentReference || null,
+    paymentStatus: o.paymentStatus || "pending",
+    fulfillmentStatus: o.fulfillmentStatus || "pending",
+    adminNotes: o.adminNotes || null,
+    paymentSubmittedAt: o.paymentSubmittedAt ? formatDateTime(o.paymentSubmittedAt) : null,
+    verifiedAt: o.verifiedAt ? formatDateTime(o.verifiedAt) : null,
+    createdAt: formatDateTime(o.createdAt),
+  }));
+}
+
+export async function confirmResourceOrderPaymentApi(
+  id: number,
+  adminNotes?: string
+): Promise<{ success: boolean; order: ResourceOrderRecord; dispatched?: boolean; dispatchError?: string }> {
+  const res = await fetch(`${getApiUrl()}/api/admin/resource-orders/${id}/confirm-payment`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ adminNotes }),
+  });
+  if (!res.ok) {
+    let msg = `Failed to confirm payment for order #${id}`;
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function rejectResourceOrderPaymentApi(
+  id: number,
+  reason?: string
+): Promise<{ success: boolean; order: ResourceOrderRecord }> {
+  const res = await fetch(`${getApiUrl()}/api/admin/resource-orders/${id}/reject-payment`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ reason }),
+  });
+  if (!res.ok) {
+    let msg = `Failed to reject payment for order #${id}`;
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function deletePhysicalOrderApi(id: number): Promise<boolean> {
+  const res = await fetch(`${getApiUrl()}/api/admin/resources/orders/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    let msg = `Failed to delete shipping order #${id}`;
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return true;
+}
+
+export async function deleteResourceOrderApi(id: number): Promise<boolean> {
+  const res = await fetch(`${getApiUrl()}/api/admin/resource-orders/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    let msg = `Failed to delete resource order #${id}`;
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return true;
+}
+

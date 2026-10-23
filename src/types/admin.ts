@@ -150,3 +150,40 @@ export interface NewResourcePayload {
   file?: File | null;
 }
 
+export interface PaymentAccountDetail {
+  id?: number;
+  accountName: string;
+  accountNumber: string;
+  branchOrShortcode?: string | null;
+  instructions: string;
+  isActive: boolean;
+}
+
+export interface PaymentSettingsResponse {
+  telebirr: PaymentAccountDetail;
+  cbe: PaymentAccountDetail;
+}
+
+export interface ResourceOrderRecord {
+  id: number;
+  orderNumber: string;
+  resourceId: number;
+  resourceTitle: string;
+  resourceType: string;
+  telegramId: string;
+  clientName?: string | null;
+  username?: string | null;
+  phone?: string | null;
+  amount: number;
+  currency: string;
+  paymentMethod: string;
+  paymentReference?: string | null;
+  paymentStatus: "pending" | "payment_submitted" | "verified" | "rejected" | "cancelled";
+  fulfillmentStatus: "pending" | "delivered" | "failed_delivery";
+  adminNotes?: string | null;
+  paymentSubmittedAt?: string | null;
+  verifiedAt?: string | null;
+  createdAt: string;
+}
+
+

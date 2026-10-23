@@ -20,6 +20,9 @@ import {
   PhysicalBookOrderItem,
   NewResourcePayload,
   NewCounselingPayload,
+  PaymentAccountDetail,
+  PaymentSettingsResponse,
+  ResourceOrderRecord,
 } from "@/types/admin";
 import { ConsoleUser } from "@/types/auth";
 import { useToast } from "@/components/ui/toast";
@@ -47,6 +50,13 @@ import {
   updatePhysicalOrderStatusApi,
   answerAnonymousQuestionApi,
   deleteAnonymousQuestionApi,
+  fetchPaymentSettingsApi,
+  updatePaymentSettingsApi,
+  fetchResourceOrdersApi,
+  confirmResourceOrderPaymentApi,
+  rejectResourceOrderPaymentApi,
+  deletePhysicalOrderApi,
+  deleteResourceOrderApi,
   NewClientPayload,
 } from "@/services/adminApi";
 
@@ -63,6 +73,8 @@ export interface AdminDataContextType {
   resourceCatalog: ResourceCatalogItem[];
   physicalBookOrders: PhysicalBookOrderItem[];
   systemUsers: ConsoleUser[];
+  paymentSettings: PaymentSettingsResponse | null;
+  resourceOrders: ResourceOrderRecord[];
 
   // Server & Connection State
   apiUrl: string;
@@ -75,6 +87,8 @@ export interface AdminDataContextType {
   isCatalogLoading: boolean;
   isOrdersLoading: boolean;
   isQuestionsLoading: boolean;
+  isPaymentSettingsLoading: boolean;
+  isResourceOrdersLoading: boolean;
 
   // Filter State
   clientFilter: string;
@@ -132,6 +146,14 @@ export interface AdminDataContextType {
     dispatchNotes?: string
   ) => Promise<void>;
   deleteResource: (id: number) => Promise<boolean>;
+  deletePhysicalOrder: (id: number) => Promise<boolean>;
+  deleteResourceOrder: (id: number) => Promise<boolean>;
+  updatePaymentSettings: (payload: {
+    telebirr?: Partial<PaymentAccountDetail>;
+    cbe?: Partial<PaymentAccountDetail>;
+  }) => Promise<boolean>;
+  confirmResourceOrderPayment: (id: number, notes?: string) => Promise<boolean>;
+  rejectResourceOrderPayment: (id: number, reason?: string) => Promise<boolean>;
   exportClientsCsv: () => void;
 }
 
@@ -195,6 +217,16 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     queryFn: fetchAnonymousQuestionsApi,
   });
 
+  const paymentSettingsQuery = useQuery({
+    queryKey: ["admin", "payment-settings"],
+    queryFn: fetchPaymentSettingsApi,
+  });
+
+  const resourceOrdersQuery = useQuery<ResourceOrderRecord[]>({
+    queryKey: ["admin", "resource-orders"],
+    queryFn: () => fetchResourceOrdersApi(),
+  });
+
   const isClientsLoading = clientsQuery.isLoading;
   const isCounselingLoading = counselingQuery.isLoading;
   const isInnerHealingLoading = innerHealingQuery.isLoading;
@@ -202,13 +234,16 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const isCatalogLoading = catalogQuery.isLoading;
   const isOrdersLoading = ordersQuery.isLoading;
   const isQuestionsLoading = questionsQuery.isLoading;
+  const isPaymentSettingsLoading = paymentSettingsQuery.isLoading;
+  const isResourceOrdersLoading = resourceOrdersQuery.isLoading;
 
   const isLoading =
     isClientsLoading ||
     isCounselingLoading ||
     isCatalogLoading ||
     isOrdersLoading ||
-    isQuestionsLoading;
+    isQuestionsLoading ||
+    isResourceOrdersLoading;
 
   const clients = useMemo(() => clientsQuery.data || [], [clientsQuery.data]);
   const counselingRequests = useMemo(() => counselingQuery.data || [], [counselingQuery.data]);
@@ -219,6 +254,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const physicalBookOrders = useMemo(() => ordersQuery.data || [], [ordersQuery.data]);
   const systemUsers = useMemo(() => usersQuery.data || [], [usersQuery.data]);
   const anonymousQuestions = useMemo(() => questionsQuery.data || [], [questionsQuery.data]);
+  const paymentSettings = paymentSettingsQuery.data ?? null;
+  const resourceOrders = useMemo(() => resourceOrdersQuery.data || [], [resourceOrdersQuery.data]);
 
   // =================== MUTATIONS ===================
 
@@ -471,6 +508,69 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  const updatePaymentSettingsMutation = useMutation({
+    mutationFn: updatePaymentSettingsApi,
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["admin", "payment-settings"], updated);
+      queryClient.invalidateQueries({ queryKey: ["admin", "payment-settings"] });
+      toast.success("Payment Settings Updated", "Account numbers saved and synced with Telegram bot.");
+    },
+    onError: (err: any) => {
+      toast.error("Update Error", err.message || "Failed to update payment settings.");
+    },
+  });
+
+  const confirmOrderMutation = useMutation({
+    mutationFn: ({ id, notes }: { id: number; notes?: string }) => confirmResourceOrderPaymentApi(id, notes),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "resource-orders"] });
+      toast.success("Order Confirmed & Delivered", "The resource file has been dispatched to the client via Telegram Bot.");
+    },
+    onError: (err: any) => {
+      toast.error("Fulfillment Error", err.message || "Failed to confirm payment or dispatch file.");
+    },
+  });
+
+  const rejectOrderMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: number; reason?: string }) => rejectResourceOrderPaymentApi(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "resource-orders"] });
+      toast.success("Order Rejected", "The customer has been notified on Telegram.");
+    },
+    onError: (err: any) => {
+      toast.error("Rejection Error", err.message || "Failed to reject order.");
+    },
+  });
+
+  const deletePhysicalOrderMutation = useMutation({
+    mutationFn: deletePhysicalOrderApi,
+    onSuccess: (_, id) => {
+      queryClient.setQueryData<PhysicalBookOrderItem[]>(["admin", "physical-orders"], (old = []) =>
+        old.filter((o) => o.id !== id)
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin", "physical-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "resource-sales"] });
+      toast.success("Order Deleted", `Shipping order #${id} deleted.`);
+    },
+    onError: (err: any) => {
+      toast.error("Delete Failed", err.message || "Failed to delete shipping order.");
+    },
+  });
+
+  const deleteResourceOrderMutation = useMutation({
+    mutationFn: deleteResourceOrderApi,
+    onSuccess: (_, id) => {
+      queryClient.setQueryData<ResourceOrderRecord[]>(["admin", "resource-orders"], (old = []) =>
+        old.filter((o) => o.id !== id)
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin", "resource-orders"] });
+      toast.success("Order Deleted", `Resource order #${id} deleted.`);
+    },
+    onError: (err: any) => {
+      toast.error("Delete Failed", err.message || "Failed to delete resource order.");
+    },
+  });
+
   // =================== WRAPPER ACTION HANDLERS ===================
 
   const syncWithRemoteBackend = useCallback(
@@ -642,6 +742,69 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     [deleteQuestionMutation]
   );
 
+  const updatePaymentSettings = useCallback(
+    async (payload: {
+      telebirr?: Partial<PaymentAccountDetail>;
+      cbe?: Partial<PaymentAccountDetail>;
+    }): Promise<boolean> => {
+      try {
+        await updatePaymentSettingsMutation.mutateAsync(payload);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [updatePaymentSettingsMutation]
+  );
+
+  const confirmResourceOrderPayment = useCallback(
+    async (id: number, notes?: string): Promise<boolean> => {
+      try {
+        await confirmOrderMutation.mutateAsync({ id, notes });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [confirmOrderMutation]
+  );
+
+  const rejectResourceOrderPayment = useCallback(
+    async (id: number, reason?: string): Promise<boolean> => {
+      try {
+        await rejectOrderMutation.mutateAsync({ id, reason });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [rejectOrderMutation]
+  );
+
+  const deletePhysicalOrder = useCallback(
+    async (id: number): Promise<boolean> => {
+      try {
+        await deletePhysicalOrderMutation.mutateAsync(id);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [deletePhysicalOrderMutation]
+  );
+
+  const deleteResourceOrder = useCallback(
+    async (id: number): Promise<boolean> => {
+      try {
+        await deleteResourceOrderMutation.mutateAsync(id);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [deleteResourceOrderMutation]
+  );
+
   const copyToClipboard = useCallback(
     (text: string, idKey: string) => {
       navigator.clipboard?.writeText(text);
@@ -781,6 +944,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       physicalBookOrders,
       anonymousQuestions,
       systemUsers,
+      paymentSettings,
+      resourceOrders,
       apiUrl,
       isRefreshing,
       isLoading,
@@ -791,6 +956,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       isCatalogLoading,
       isOrdersLoading,
       isQuestionsLoading,
+      isPaymentSettingsLoading,
+      isResourceOrdersLoading,
       clientFilter,
       setClientFilter,
       counselingFilter,
@@ -826,6 +993,11 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       updateResource,
       updatePhysicalOrderStatus,
       deleteResource,
+      updatePaymentSettings,
+      confirmResourceOrderPayment,
+      rejectResourceOrderPayment,
+      deletePhysicalOrder,
+      deleteResourceOrder,
       exportClientsCsv,
     }),
     [
@@ -838,6 +1010,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       physicalBookOrders,
       anonymousQuestions,
       systemUsers,
+      paymentSettings,
+      resourceOrders,
       apiUrl,
       isRefreshing,
       isLoading,
@@ -848,6 +1022,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       isCatalogLoading,
       isOrdersLoading,
       isQuestionsLoading,
+      isPaymentSettingsLoading,
+      isResourceOrdersLoading,
       clientFilter,
       counselingFilter,
       copiedId,
@@ -881,6 +1057,11 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       updateResource,
       updatePhysicalOrderStatus,
       deleteResource,
+      updatePaymentSettings,
+      confirmResourceOrderPayment,
+      rejectResourceOrderPayment,
+      deletePhysicalOrder,
+      deleteResourceOrder,
       exportClientsCsv,
     ]
   );

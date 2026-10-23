@@ -56,9 +56,9 @@ export function ClientRegistrationModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger className="bg-[#202328] hover:bg-black text-white text-xs h-9 px-4 rounded-full cursor-pointer shadow-2xs font-semibold flex items-center gap-1.5 transition-all">
+      <DialogTrigger className="bg-[#202328] hover:bg-black text-white text-xs h-9 px-4 rounded-full cursor-pointer shadow-2xs font-semibold flex items-center gap-1.5 transition-all shrink-0">
         <Plus className="w-3.5 h-3.5 text-[#F6CE46]" />
-        <span>Add Client</span>
+        <span>Client</span>
       </DialogTrigger>
 
       <DialogContent className="bg-white border border-black/[0.08] text-[#202328] w-full sm:max-w-xl shadow-2xl rounded-2xl p-6 overflow-hidden">

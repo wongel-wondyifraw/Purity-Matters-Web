@@ -71,7 +71,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
         <main
           id="admin-main"
-          className="flex-1 flex flex-col min-h-0 w-full p-3.5 sm:p-4 lg:p-6 gap-3.5 lg:gap-4 overflow-y-auto lg:overflow-hidden pb-24 md:pb-24 lg:pb-6"
+          className="flex-1 flex flex-col min-h-0 w-full p-3.5 sm:p-4 lg:p-6 gap-3.5 lg:gap-4 overflow-y-auto overflow-x-hidden no-scrollbar lg:overflow-hidden pb-24 md:pb-24 lg:pb-6"
         >
           <div className="shrink-0">
             <AppHero />

@@ -111,45 +111,50 @@ export function ClientsTable() {
           </CardDescription>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-          {/* Search Box */}
-          <div className="relative w-full sm:w-64">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+          {/* 1. Search Box: Always on top on mobile */}
+          <div className="relative w-full sm:w-56 lg:w-64">
             <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3.5 top-3" />
             <Input
               placeholder="Search name, phone, @user, ID..."
-              className="bg-white/80 border-black/10 rounded-full pl-9 h-9 text-xs text-[#202328] shadow-2xs focus:border-[#202328] focus:ring-0"
+              className="bg-white/80 border-black/10 rounded-full pl-9 h-9 text-xs text-[#202328] shadow-2xs focus:border-[#202328] focus:ring-0 w-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
-          {/* Filter Dropdown */}
-          <select
-            className="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer h-9"
-            value={clientFilter}
-            onChange={(e) => setClientFilter(e.target.value)}
-          >
-            <option value="all">All Registrations</option>
-            <option value="verified">Verified (Has Phone)</option>
-            <option value="in-progress">In-Progress</option>
-            <option value="admin">Administrators</option>
-            <option value="ethiopia">Ethiopia (+251)</option>
-            <option value="diaspora">Diaspora / Global</option>
-          </select>
+          {/* 2. Below Search on Mobile: All Action Buttons */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
+            {/* Filter Dropdown */}
+            <select
+              className="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer h-9 shrink-0 flex-1 sm:flex-none"
+              value={clientFilter}
+              onChange={(e) => setClientFilter(e.target.value)}
+            >
+              <option value="all">All Registrations</option>
+              <option value="verified">Verified (Has Phone)</option>
+              <option value="in-progress">In-Progress</option>
+              <option value="admin">Administrators</option>
+              <option value="ethiopia">Ethiopia (+251)</option>
+              <option value="diaspora">Diaspora / Global</option>
+            </select>
 
-          {/* Export CSV Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={exportClientsCsv}
-            className="border-black/15 text-[#202328] bg-white/80 hover:bg-white text-xs h-9 px-4 rounded-full cursor-pointer shadow-2xs font-semibold"
-          >
-            <Download className="w-3.5 h-3.5 mr-1.5 text-neutral-600" />
-            Export CSV
-          </Button>
+            {/* Export Action Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportClientsCsv}
+              className="border-black/15 text-[#202328] bg-white/80 hover:bg-white text-xs h-9 px-3.5 rounded-full cursor-pointer shadow-2xs font-semibold shrink-0"
+            >
+              <Download className="w-3.5 h-3.5 mr-1 text-neutral-600" />
+              <span>Export</span>
+            </Button>
 
-          {/* Add Client Modal */}
-          <ClientRegistrationModal />
+            {/* Action Button: + Client */}
+            <div className="shrink-0">
+              <ClientRegistrationModal />
+            </div>
+          </div>
         </div>
       </CardHeader>
 

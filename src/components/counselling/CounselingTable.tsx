@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { HeartHandshake, RefreshCw, Trash2 } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { HeartHandshake, RefreshCw, Trash2, Search } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -10,6 +10,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -41,18 +42,30 @@ export function CounselingTable() {
     deleteCounselingRequest,
   } = useAdminData();
 
+  const [searchQuery, setSearchQuery] = useState("");
+
   const filteredCounseling = useMemo(() => {
     return counselingRequests.filter((item) => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        item.clientName.toLowerCase().includes(q) ||
+        item.referenceNumber.toLowerCase().includes(q) ||
+        item.concern.toLowerCase().includes(q) ||
+        (item.assignedTo && item.assignedTo.toLowerCase().includes(q)) ||
+        (item.phone && item.phone.toLowerCase().includes(q));
+
+      if (!matchesSearch) return false;
       if (counselingFilter === "all") return true;
       return item.status === counselingFilter;
     });
-  }, [counselingRequests, counselingFilter]);
+  }, [counselingRequests, counselingFilter, searchQuery]);
 
   return (
     <Card className="flex-1 flex flex-col min-h-0 h-full bg-white/90 backdrop-blur-md border border-black/[0.06] rounded-2xl shadow-2xs overflow-hidden">
-      <CardHeader className="shrink-0 flex flex-row items-center justify-between border-b border-black/[0.06] pb-4">
+      <CardHeader className="shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 border-b border-black/[0.06] pb-3.5 sm:pb-4">
         <div>
-          <CardTitle className="text-lg font-bold text-[#202328] tracking-tight flex items-center gap-2">
+          <CardTitle className="text-base sm:text-lg font-bold text-[#202328] tracking-tight flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#F6CE46] shrink-0" />
             <span>Counselling Intake Management</span>
           </CardTitle>
@@ -61,21 +74,39 @@ export function CounselingTable() {
           </CardDescription>
         </div>
 
-        <div className="flex items-center gap-2">
-          <select
-            id="select-counseling-filter"
-            className="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer"
-            value={counselingFilter}
-            onChange={(e) => setCounselingFilter(e.target.value)}
-          >
-            <option value="all">All Statuses</option>
-            <option value="pending">Pending</option>
-            <option value="assigned">Assigned</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="completed">Completed</option>
-          </select>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+          {/* 1. Search Box: Always on top on mobile */}
+          <div className="relative w-full sm:w-56 lg:w-64">
+            <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3.5 top-3" />
+            <Input
+              placeholder="Search ref, client, concern..."
+              className="bg-white/80 border-black/10 rounded-full pl-9 h-9 text-xs text-[#202328] shadow-2xs focus:border-[#202328] focus:ring-0 w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
 
-          <AddCounselingModal />
+          {/* 2. Below Search on Mobile: All Action Buttons */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
+            {/* Filter Dropdown */}
+            <select
+              id="select-counseling-filter"
+              className="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#202328] cursor-pointer h-9 shrink-0 flex-1 sm:flex-none"
+              value={counselingFilter}
+              onChange={(e) => setCounselingFilter(e.target.value)}
+            >
+              <option value="all">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="assigned">Assigned</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="completed">Completed</option>
+            </select>
+
+            {/* Action Button: + Counseling */}
+            <div className="shrink-0">
+              <AddCounselingModal />
+            </div>
+          </div>
         </div>
       </CardHeader>
 
