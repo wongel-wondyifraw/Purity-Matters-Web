@@ -74,14 +74,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
         <main
           id="admin-main"
-          className="flex-1 flex flex-col min-h-0 w-full p-3.5 sm:p-4 lg:p-6 gap-3.5 lg:gap-4 overflow-y-auto overflow-x-hidden no-scrollbar lg:overflow-hidden pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] lg:pb-6 overscroll-contain"
+          className="flex-1 flex flex-col min-h-0 w-full p-3.5 sm:p-4 lg:p-6 gap-3.5 lg:gap-4 overflow-y-auto overflow-x-hidden no-scrollbar pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] lg:pb-6 overscroll-contain"
         >
           <PullToRefresh onRefresh={hardRefresh} isRefreshing={isRefreshing}>
             <div className="shrink-0 mb-3.5 lg:mb-4">
               <AppHero />
             </div>
 
-            <div className="flex-1 flex flex-col min-h-0 w-full overflow-visible lg:overflow-hidden">
+            <div className="flex-1 flex flex-col min-h-0 w-full">
               {children}
             </div>
           </PullToRefresh>
@@ -156,6 +156,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
               onFilterChange={setClientFilter}
               onSelectTab={(tab) => {
                 setIsMobileDemographicsOpen(false);
+                if (typeof document !== "undefined") {
+                  document.body.style.pointerEvents = "";
+                  document.documentElement.style.pointerEvents = "";
+                }
                 if (tab === "clients") {
                   router.push("/clients");
                 } else {

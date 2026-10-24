@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Check and restore session on mount
+  // Check and restore session on mount (instant from cache, then background verify)
   useEffect(() => {
     async function restoreSession() {
       try {
@@ -57,35 +57,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        // Instant optimistic session restoration
         setToken(storedToken);
 
         if (cachedUserJson) {
           try {
-            setUser(JSON.parse(cachedUserJson));
+            const cached = JSON.parse(cachedUserJson);
+            setUser(cached);
+            // Immediately mark as loaded so user sees interface without delay
+            setIsLoading(false);
           } catch {
-            // ignore cache parse error
+            // cache parse error, will wait for network verification
           }
         }
 
-        // Verify token against /api/auth/me
-        const response = await fetch(`${apiUrl}/api/auth/me`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${storedToken}`,
-            "Content-Type": "application/json",
-          },
-        });
+        // Verify token in background against /api/auth/me
+        try {
+          const response = await fetch(`${apiUrl}/api/auth/me`, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${storedToken}`,
+              "Content-Type": "application/json",
+            },
+          });
 
-        if (response.ok) {
-          const freshUser: ConsoleUser = await response.json();
-          setUser(freshUser);
-          localStorage.setItem(USER_CACHE_KEY, JSON.stringify(freshUser));
-        } else if (response.status === 401 || response.status === 403) {
-          // Token expired or invalid
-          localStorage.removeItem(TOKEN_KEY);
-          localStorage.removeItem(USER_CACHE_KEY);
-          setToken(null);
-          setUser(null);
+          if (response.ok) {
+            const freshUser: ConsoleUser = await response.json();
+            setUser(freshUser);
+            localStorage.setItem(USER_CACHE_KEY, JSON.stringify(freshUser));
+          } else if (response.status === 401 || response.status === 403) {
+            // Server explicitly rejected the token (expired or invalid)
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(USER_CACHE_KEY);
+            setToken(null);
+            setUser(null);
+          }
+        } catch (networkErr) {
+          // Network drop, offline, server restart, or transient hiccup:
+          // Keep cached credentials active so user is NOT kicked to login!
+          console.warn("Background auth session check skipped (offline/unreachable):", networkErr);
         }
       } catch (err) {
         console.warn("Auth session verification warning:", err);
@@ -97,8 +107,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     restoreSession();
   }, [apiUrl]);
 
-  // Route protection effect
+  // Route protection effect and pointer-events cleanup
   useEffect(() => {
+    // Guarantee pointer-events are always active across navigation
+    if (typeof document !== "undefined") {
+      document.body.style.pointerEvents = "";
+      document.documentElement.style.pointerEvents = "";
+    }
+
     if (isLoading) return;
 
     const isAuthRoute = pathname === "/login";

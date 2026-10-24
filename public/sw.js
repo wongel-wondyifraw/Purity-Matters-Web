@@ -1,11 +1,14 @@
 // Service Worker for Purity Matters Web Console PWA
-const CACHE_NAME = "purity-matters-pwa-v2";
+const CACHE_NAME = "purity-matters-pwa-v3";
 const STATIC_ASSETS = [
   "/manifest.json",
   "/icons/icon-192x192.png",
   "/icons/icon-512x512.png",
+  "/icons/icon-maskable-512x512.png",
   "/icons/apple-touch-icon.png",
-  "/icons/icon.svg"
+  "/icons/icon.svg",
+  "/favicon.ico",
+  "/favicon.png"
 ];
 
 // Install Event - Precache only immutable static icon assets

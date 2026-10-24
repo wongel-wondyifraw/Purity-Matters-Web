@@ -24,51 +24,111 @@ export function PullToRefresh({
   const [pullDistance, setPullDistance] = useState<number>(0);
   const [isPulling, setIsPulling] = useState<boolean>(false);
   const [internalRefreshing, setInternalRefreshing] = useState<boolean>(false);
-  const hasVibratedRef = useRef<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const startYRef = useRef<number>(0);
+  const startXRef = useRef<number>(0);
   const isEligibleRef = useRef<boolean>(false);
+  const pullDistanceRef = useRef<number>(0);
+  const hasVibratedRef = useRef<boolean>(false);
 
   const activeRefreshing = isRefreshing || internalRefreshing;
 
-  // Handle pull gesture start
-  const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
-    if (activeRefreshing) return;
-
-    // Verify if container or window is at the top
-    const container = containerRef.current;
-    const isAtTop = container ? container.scrollTop <= 0 : window.scrollY <= 0;
-
-    if (isAtTop) {
-      isEligibleRef.current = true;
-      const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
-      startYRef.current = clientY;
-      hasVibratedRef.current = false;
-    } else {
-      isEligibleRef.current = false;
+  // Strict check to ensure the page is at the absolute top boundary
+  const isScrolledToVeryTop = useCallback((target?: EventTarget | null): boolean => {
+    // 1. Check window / document scroll
+    if (typeof window !== "undefined") {
+      if (window.scrollY > 0 || window.pageYOffset > 0) return false;
+      if (document.documentElement && document.documentElement.scrollTop > 0) return false;
+      if (document.body && document.body.scrollTop > 0) return false;
     }
-  };
+
+    // 2. Check the main shell scroll container (#admin-main)
+    const adminMain = document.getElementById("admin-main");
+    if (adminMain && adminMain.scrollTop > 0) return false;
+
+    // 3. Check the pull-to-refresh container itself
+    const container = containerRef.current;
+    if (container && container.scrollTop > 0) return false;
+
+    // 4. Walk up from target element to ensure NO ancestor is scrolled down
+    if (target && target instanceof Element) {
+      let curr: Element | null = target;
+      while (curr && curr !== document.body && curr !== document.documentElement) {
+        if (curr.scrollTop > 0) {
+          return false;
+        }
+        curr = curr.parentElement;
+      }
+    }
+
+    // 5. Check any scrollable elements inside the container that might have scrolled
+    if (container) {
+      const scrollables = container.querySelectorAll<HTMLElement>(
+        '[class*="overflow-y-auto"], [class*="overflow-auto"], .overflow-y-auto'
+      );
+      for (let i = 0; i < scrollables.length; i++) {
+        if (scrollables[i].scrollTop > 0) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }, []);
+
+  // Handle pull gesture start
+  const handleTouchStart = useCallback(
+    (e: TouchEvent) => {
+      if (activeRefreshing) return;
+
+      // Verify that the page is strictly at the top
+      const isAtTop = isScrolledToVeryTop(e.target);
+
+      if (isAtTop && e.touches.length === 1) {
+        isEligibleRef.current = true;
+        startYRef.current = e.touches[0].clientY;
+        startXRef.current = e.touches[0].clientX;
+        hasVibratedRef.current = false;
+      } else {
+        isEligibleRef.current = false;
+      }
+    },
+    [activeRefreshing, isScrolledToVeryTop]
+  );
 
   // Handle pull gesture move
   const handleTouchMove = useCallback(
-    (e: TouchEvent | MouseEvent) => {
-      if (!isEligibleRef.current || activeRefreshing) return;
+    (e: TouchEvent) => {
+      if (!isEligibleRef.current || activeRefreshing || e.touches.length !== 1) return;
 
-      const container = containerRef.current;
-      const isAtTop = container ? container.scrollTop <= 0 : window.scrollY <= 0;
-      if (!isAtTop) {
-        setIsPulling(false);
+      const clientY = e.touches[0].clientY;
+      const clientX = e.touches[0].clientX;
+      const deltaY = clientY - startYRef.current;
+      const deltaX = clientX - startXRef.current;
+
+      // If user is swiping horizontally or scrolling up into content, immediately cancel
+      if (Math.abs(deltaX) > Math.abs(deltaY) || deltaY <= 0) {
+        isEligibleRef.current = false;
+        pullDistanceRef.current = 0;
         setPullDistance(0);
+        setIsPulling(false);
         return;
       }
 
-      const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
-      const deltaY = clientY - startYRef.current;
+      // Re-verify that no element has scrolled
+      if (!isScrolledToVeryTop(e.target)) {
+        isEligibleRef.current = false;
+        pullDistanceRef.current = 0;
+        setPullDistance(0);
+        setIsPulling(false);
+        return;
+      }
 
-      if (deltaY > 0) {
-        // Damped pull distance
-        const distance = Math.min(maxPull, Math.pow(deltaY, 0.85) * 1.5);
+      // Damped pull distance with an initial deadzone of 8px
+      if (deltaY > 8) {
+        const distance = Math.min(maxPull, Math.pow(deltaY - 8, 0.8) * 1.4);
+        pullDistanceRef.current = distance;
         setPullDistance(distance);
         setIsPulling(true);
 
@@ -80,16 +140,17 @@ export function PullToRefresh({
           hasVibratedRef.current = false;
         }
 
-        // Prevent native bounce interference if dragging down
-        if (e.cancelable && deltaY > 15) {
+        // Prevent native overscroll clash only when pulling down from the very top
+        if (e.cancelable && deltaY > 16) {
           e.preventDefault();
         }
       } else {
+        pullDistanceRef.current = 0;
         setPullDistance(0);
         setIsPulling(false);
       }
     },
-    [activeRefreshing, maxPull, threshold]
+    [activeRefreshing, isScrolledToVeryTop, maxPull, threshold]
   );
 
   // Handle pull gesture release
@@ -97,7 +158,10 @@ export function PullToRefresh({
     if (!isEligibleRef.current || activeRefreshing) return;
     isEligibleRef.current = false;
 
-    if (pullDistance >= threshold) {
+    const finalDistance = pullDistanceRef.current;
+
+    if (finalDistance >= threshold) {
+      pullDistanceRef.current = 52;
       setPullDistance(52); // Lock to comfortable loading badge height
       setInternalRefreshing(true);
       triggerHaptic("medium");
@@ -109,34 +173,39 @@ export function PullToRefresh({
         triggerHaptic("warning");
       } finally {
         setInternalRefreshing(false);
+        pullDistanceRef.current = 0;
         setPullDistance(0);
         setIsPulling(false);
         hasVibratedRef.current = false;
       }
     } else {
+      pullDistanceRef.current = 0;
       setPullDistance(0);
       setIsPulling(false);
       hasVibratedRef.current = false;
     }
-  }, [activeRefreshing, onRefresh, pullDistance, threshold]);
+  }, [activeRefreshing, onRefresh, threshold]);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const moveListener = (e: TouchEvent) => handleTouchMove(e);
-    const endListener = () => handleTouchEnd();
+    const onTouchStart = (e: TouchEvent) => handleTouchStart(e);
+    const onTouchMove = (e: TouchEvent) => handleTouchMove(e);
+    const onTouchEnd = () => handleTouchEnd();
 
-    container.addEventListener("touchmove", moveListener, { passive: false });
-    container.addEventListener("touchend", endListener);
-    container.addEventListener("touchcancel", endListener);
+    container.addEventListener("touchstart", onTouchStart, { passive: true });
+    container.addEventListener("touchmove", onTouchMove, { passive: false });
+    container.addEventListener("touchend", onTouchEnd, { passive: true });
+    container.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
     return () => {
-      container.removeEventListener("touchmove", moveListener);
-      container.removeEventListener("touchend", endListener);
-      container.removeEventListener("touchcancel", endListener);
+      container.removeEventListener("touchstart", onTouchStart);
+      container.removeEventListener("touchmove", onTouchMove);
+      container.removeEventListener("touchend", onTouchEnd);
+      container.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [handleTouchMove, handleTouchEnd]);
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   const rotationDeg = Math.min(360, (pullDistance / threshold) * 360);
   const isPastThreshold = pullDistance >= threshold;
@@ -145,8 +214,6 @@ export function PullToRefresh({
     <div
       ref={containerRef}
       id="pull-to-refresh-container"
-      onTouchStart={handleTouchStart}
-      onMouseDown={handleTouchStart}
       className={`relative w-full h-full flex flex-col ${className}`}
     >
       {/* Floating Animated Pull & Refresh Indicator Badge */}

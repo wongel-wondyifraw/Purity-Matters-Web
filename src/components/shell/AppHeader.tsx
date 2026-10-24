@@ -87,7 +87,7 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
         {/* Center: Crextio Pill Navigation Bar */}
         <nav
           id="crextio-nav-pills"
-          className="hidden md:flex items-center gap-1 bg-white/60 p-1 rounded-full border border-black/[0.08] shadow-2xs overflow-x-auto"
+          className="hidden md:flex items-center gap-1 bg-white/60 p-1 rounded-full border border-black/[0.08] shadow-2xs overflow-x-auto no-scrollbar touch-manipulation select-none"
         >
           {NAV_ITEMS.map((item) => {
             const isActive =

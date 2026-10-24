@@ -42,10 +42,25 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
     pathname.startsWith("/inner-healing") ||
     pathname.startsWith("/courses") ||
     pathname.startsWith("/resources") ||
-    pathname.startsWith("/users");
+    pathname.startsWith("/users") ||
+    pathname.startsWith("/reports") ||
+    pathname.startsWith("/activities");
+
+  // Automatically close more menu whenever pathname changes
+  React.useEffect(() => {
+    setIsMoreMenuOpen(false);
+    if (typeof document !== "undefined") {
+      document.body.style.pointerEvents = "";
+      document.documentElement.style.pointerEvents = "";
+    }
+  }, [pathname]);
 
   const handleNavigation = (href: string) => {
     setIsMoreMenuOpen(false);
+    if (typeof document !== "undefined") {
+      document.body.style.pointerEvents = "";
+      document.documentElement.style.pointerEvents = "";
+    }
     router.push(href);
   };
 
@@ -203,16 +218,17 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
         </div>
       </nav>
 
-      {/* MORE MENU SLIDE-UP BOTTOM SHEET */}
+      {/* MORE MENU SLIDE-UP BOTTOM SHEET (Clean, high-performance translucent backdrop without nested backdrop-filter to eliminate black flicker/glitch) */}
       {isMoreMenuOpen && (
         <div
           id="mobile-more-menu-backdrop"
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex flex-col justify-end md:hidden animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/50 flex flex-col justify-end md:hidden animate-in fade-in-0 duration-150 touch-manipulation"
           onClick={() => setIsMoreMenuOpen(false)}
         >
           <div
             id="mobile-more-menu-sheet"
-            className="bg-white rounded-t-3xl border-t border-black/10 shadow-2xl p-5 max-h-[85vh] overflow-y-auto no-scrollbar animate-in slide-in-from-bottom duration-200"
+            className="bg-white rounded-t-3xl border-t border-black/10 shadow-2xl p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] max-h-[85vh] overflow-y-auto no-scrollbar animate-in slide-in-from-bottom duration-200 will-change-transform"
+            style={{ transform: "translateZ(0)" }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Grab Handle */}

@@ -178,17 +178,22 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  // Active window resume & PWA visibility synchronization
+  // Active window resume & PWA visibility synchronization (debounced to avoid thread congestion)
   useEffect(() => {
+    let resumeTimer: ReturnType<typeof setTimeout> | null = null;
     const handleResume = () => {
       if (typeof document !== "undefined" && document.visibilityState === "visible") {
-        queryClient.invalidateQueries({ queryKey: ["admin"], refetchType: "all" });
+        if (resumeTimer) clearTimeout(resumeTimer);
+        resumeTimer = setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ["admin"], refetchType: "active" });
+        }, 350);
       }
     };
     window.addEventListener("focus", handleResume);
     document.addEventListener("visibilitychange", handleResume);
     window.addEventListener("online", handleResume);
     return () => {
+      if (resumeTimer) clearTimeout(resumeTimer);
       window.removeEventListener("focus", handleResume);
       document.removeEventListener("visibilitychange", handleResume);
       window.removeEventListener("online", handleResume);
@@ -196,82 +201,83 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   // =================== TANSTACK QUERIES ===================
+  // Optimized polling intervals: Never poll in background; responsive when visible without CPU choke
 
   const clientsQuery = useQuery({
     queryKey: ["admin", "clients"],
     queryFn: fetchClientsApi,
-    refetchInterval: 5000,
-    refetchIntervalInBackground: true,
+    refetchInterval: 25000,
+    refetchIntervalInBackground: false,
   });
 
   const counselingQuery = useQuery({
     queryKey: ["admin", "counseling"],
     queryFn: fetchCounselingApi,
-    refetchInterval: 4000,
-    refetchIntervalInBackground: true,
+    refetchInterval: 15000,
+    refetchIntervalInBackground: false,
   });
 
   const innerHealingQuery = useQuery({
     queryKey: ["admin", "inner-healing"],
     queryFn: fetchInnerHealingApi,
-    refetchInterval: 4000,
-    refetchIntervalInBackground: true,
+    refetchInterval: 15000,
+    refetchIntervalInBackground: false,
   });
 
   const coursesQuery = useQuery({
     queryKey: ["admin", "courses"],
     queryFn: fetchCoursesApi,
-    refetchInterval: 15000,
+    refetchInterval: 45000,
     refetchIntervalInBackground: false,
   });
 
   const resourceSalesQuery = useQuery({
     queryKey: ["admin", "resource-sales"],
     queryFn: fetchResourceSalesApi,
-    refetchInterval: 5000,
-    refetchIntervalInBackground: true,
+    refetchInterval: 25000,
+    refetchIntervalInBackground: false,
   });
 
   const catalogQuery = useQuery({
     queryKey: ["admin", "resource-catalog"],
     queryFn: fetchResourceCatalogApi,
-    refetchInterval: 15000,
+    refetchInterval: 45000,
     refetchIntervalInBackground: false,
   });
 
   const ordersQuery = useQuery({
     queryKey: ["admin", "physical-orders"],
     queryFn: fetchPhysicalBookOrdersApi,
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
+    refetchInterval: 15000,
+    refetchIntervalInBackground: false,
   });
 
   const usersQuery = useQuery({
     queryKey: ["admin", "users"],
     queryFn: fetchSystemUsersApi,
-    refetchInterval: 25000,
+    refetchInterval: 60000,
     refetchIntervalInBackground: false,
   });
 
   const questionsQuery = useQuery({
     queryKey: ["admin", "questions"],
     queryFn: fetchAnonymousQuestionsApi,
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
+    refetchInterval: 15000,
+    refetchIntervalInBackground: false,
   });
 
   const paymentSettingsQuery = useQuery({
     queryKey: ["admin", "payment-settings"],
     queryFn: fetchPaymentSettingsApi,
-    refetchInterval: 45000,
+    refetchInterval: 60000,
     refetchIntervalInBackground: false,
   });
 
   const resourceOrdersQuery = useQuery<ResourceOrderRecord[]>({
     queryKey: ["admin", "resource-orders"],
     queryFn: () => fetchResourceOrdersApi(),
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
+    refetchInterval: 15000,
+    refetchIntervalInBackground: false,
   });
 
   const isClientsLoading = clientsQuery.isLoading;
