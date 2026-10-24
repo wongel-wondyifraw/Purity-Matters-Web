@@ -84,6 +84,13 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
                 };
               }
             };
+            // Auto-check for updates whenever the PWA is resumed or focused
+            const onVisibilityChange = () => {
+              if (document.visibilityState === "visible") {
+                reg.update().catch(() => {});
+              }
+            };
+            document.addEventListener("visibilitychange", onVisibilityChange);
           })
           .catch((err) => {
             console.warn("ServiceWorker registration failed:", err);
