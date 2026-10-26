@@ -126,22 +126,22 @@ export function InnerHealingTable() {
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-neutral-100/95 backdrop-blur-xs shadow-2xs">
                 <TableRow className="border-b border-black/[0.06] hover:bg-transparent">
-                <TableHead className="text-[#202328] font-bold text-xs py-3 px-4">
+                <TableHead className="text-[#202328] font-bold text-xs py-3 px-4 w-32 shrink-0">
                   Reference
                 </TableHead>
-                <TableHead className="text-[#202328] font-bold text-xs py-3">
+                <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[140px]">
                   Client
                 </TableHead>
-                <TableHead className="text-[#202328] font-bold text-xs py-3">
+                <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[260px] max-w-[460px]">
                   Topic / Issue Description
                 </TableHead>
-                <TableHead className="text-[#202328] font-bold text-xs py-3">
+                <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[130px]">
                   Requested At
                 </TableHead>
-                <TableHead className="text-[#202328] font-bold text-xs py-3">
+                <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[120px]">
                   Status
                 </TableHead>
-                <TableHead className="text-[#202328] font-bold text-xs py-3 text-right px-4">
+                <TableHead className="text-[#202328] font-bold text-xs py-3 text-right px-4 min-w-[140px]">
                   Actions
                 </TableHead>
               </TableRow>
@@ -150,17 +150,17 @@ export function InnerHealingTable() {
               {isInnerHealingLoading ? (
                 Array.from({ length: 5 }).map((_, idx) => (
                   <TableRow key={`ih-skel-${idx}`} className="border-b border-black/[0.04]">
-                    <TableCell className="px-4 py-3"><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
-                    <TableCell>
+                    <TableCell className="px-4 py-3 align-top"><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+                    <TableCell className="align-top">
                       <div className="space-y-1">
                         <Skeleton className="h-4 w-32" />
                         <Skeleton className="h-2.5 w-24" />
                       </div>
                     </TableCell>
-                    <TableCell><Skeleton className="h-5 w-36 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
-                    <TableCell className="text-right px-4"><Skeleton className="h-7 w-20 rounded-full ml-auto" /></TableCell>
+                    <TableCell className="align-top"><Skeleton className="h-10 w-64 rounded-xl" /></TableCell>
+                    <TableCell className="align-top"><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell className="align-top"><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+                    <TableCell className="text-right px-4 align-top"><Skeleton className="h-7 w-20 rounded-full ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : filteredRequests.length === 0 ? (
@@ -190,12 +190,12 @@ export function InnerHealingTable() {
                     key={item.id}
                     className="border-b border-black/[0.04] hover:bg-black/[0.02] transition-colors"
                   >
-                    <TableCell className="px-4">
+                    <TableCell className="px-4 py-3.5 align-top">
                       <span className="text-[#202328] font-bold text-xs bg-[#F6CE46]/20 border border-[#F6CE46]/40 rounded-full px-2.5 py-1 font-mono">
                         {item.referenceNumber}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-3.5 align-top min-w-[140px]">
                       <div className="font-bold text-[#202328] text-sm">
                         {item.clientName}
                       </div>
@@ -203,15 +203,17 @@ export function InnerHealingTable() {
                         {item.phone}
                       </div>
                     </TableCell>
-                    <TableCell className="max-w-[300px]">
-                      <span className="inline-block border border-black/10 text-xs bg-white text-[#202328] font-medium px-2.5 py-1 rounded-xl shadow-2xs max-w-full break-words">
-                        {item.topic || "General Inner Healing"}
-                      </span>
+                    <TableCell className="align-top py-3.5 min-w-[260px] max-w-[460px] whitespace-normal">
+                      <div className="flex items-start">
+                        <div className="inline-flex border border-black/10 text-xs bg-white text-[#202328] font-medium px-3 py-1.5 rounded-xl shadow-2xs max-w-full whitespace-normal break-words leading-relaxed text-left">
+                          {item.topic || "General Inner Healing"}
+                        </div>
+                      </div>
                     </TableCell>
-                    <TableCell className="text-neutral-500 text-xs font-medium">
+                    <TableCell className="text-neutral-500 text-xs font-medium py-3.5 align-top min-w-[130px]">
                       {item.createdAt}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-3.5 align-top min-w-[120px]">
                       <span
                         className={`text-xs font-semibold px-2.5 py-1 rounded-full shadow-2xs ${
                           item.status === "pending"
@@ -224,7 +226,7 @@ export function InnerHealingTable() {
                         {item.status.toUpperCase()}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right px-4 space-x-2">
+                    <TableCell className="text-right px-4 py-3.5 align-top space-x-2 min-w-[140px]">
                       {item.status === "pending" && (
                         <Button
                           size="sm"

@@ -574,22 +574,22 @@ export function CoursesTable() {
                 <Table>
                   <TableHeader className="sticky top-0 z-10 bg-neutral-100/95 backdrop-blur-xs shadow-2xs">
                     <TableRow className="border-b border-black/[0.06] hover:bg-transparent">
-                      <TableHead className="text-[#202328] font-bold text-xs py-3 px-4">
+                      <TableHead className="text-[#202328] font-bold text-xs py-3 px-4 min-w-[140px]">
                         Client
                       </TableHead>
-                      <TableHead className="text-[#202328] font-bold text-xs py-3">
+                      <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[120px]">
                         Contact
                       </TableHead>
-                      <TableHead className="text-[#202328] font-bold text-xs py-3">
+                      <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[200px] max-w-[360px]">
                         Journey Enrolled
                       </TableHead>
-                      <TableHead className="text-[#202328] font-bold text-xs py-3">
+                      <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[160px]">
                         Current Progress
                       </TableHead>
-                      <TableHead className="text-[#202328] font-bold text-xs py-3">
+                      <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[150px]">
                         Accountability Partner
                       </TableHead>
-                      <TableHead className="text-[#202328] font-bold text-xs py-3 px-4">
+                      <TableHead className="text-[#202328] font-bold text-xs py-3 px-4 min-w-[120px]">
                         Last Active
                       </TableHead>
                     </TableRow>
@@ -648,16 +648,20 @@ export function CoursesTable() {
                           key={item.id}
                           className="border-b border-black/[0.04] hover:bg-black/[0.02] transition-colors"
                         >
-                          <TableCell className="font-bold text-[#202328] text-sm px-4">
+                          <TableCell className="font-bold text-[#202328] text-sm px-4 py-3.5 align-top min-w-[140px]">
                             {item.clientName}
                           </TableCell>
-                          <TableCell className="text-neutral-500 text-xs font-medium">
+                          <TableCell className="text-neutral-500 text-xs font-medium py-3.5 align-top min-w-[120px]">
                             {item.phone || "—"}
                           </TableCell>
-                          <TableCell className="text-[#202328] text-xs font-semibold">
-                            {item.courseTitle}
+                          <TableCell className="text-[#202328] text-xs font-semibold py-3.5 align-top min-w-[200px] max-w-[360px] whitespace-normal">
+                            <div className="flex items-start">
+                              <span className="inline-flex border border-black/10 text-xs bg-white text-[#202328] font-semibold px-2.5 py-1.5 rounded-xl shadow-2xs max-w-full whitespace-normal break-words leading-relaxed text-left">
+                                {item.courseTitle}
+                              </span>
+                            </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="py-3.5 align-top min-w-[160px]">
                             <div className="flex items-center gap-2">
                               <span className="text-xs text-[#202328] font-bold">
                                 Day {item.currentDay} / {item.totalDays}

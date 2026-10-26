@@ -1255,5 +1255,26 @@ export async function deleteCourseEnrollmentApi(id: number): Promise<boolean> {
   return true;
 }
 
+export async function broadcastBotUpdateApi(
+  version: string,
+  releaseNotes?: string,
+): Promise<{ success: boolean; sent: number; failed: number; message: string }> {
+  const res = await adminFetch("/api/admin/bot/broadcast-update", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ version, releaseNotes }),
+  });
+  if (!res.ok) {
+    let msg = "Failed to broadcast bot update";
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+
 
 

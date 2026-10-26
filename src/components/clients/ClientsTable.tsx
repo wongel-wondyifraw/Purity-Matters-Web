@@ -183,25 +183,25 @@ export function ClientsTable() {
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-neutral-100/95 backdrop-blur-xs shadow-2xs">
                 <TableRow className="border-b border-black/[0.06] hover:bg-transparent">
-                  <TableHead className="text-[#202328] font-bold text-xs py-3 w-16 px-4">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 w-16 px-4 shrink-0">
                     ID
                   </TableHead>
-                  <TableHead className="text-[#202328] font-bold text-xs py-3">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[160px]">
                     Name
                   </TableHead>
-                  <TableHead className="text-[#202328] font-bold text-xs py-3">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[130px]">
                     Telegram ID
                   </TableHead>
-                  <TableHead className="text-[#202328] font-bold text-xs py-3">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[130px]">
                     Verified Phone
                   </TableHead>
-                  <TableHead className="text-[#202328] font-bold text-xs py-3">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[110px]">
                     Status
                   </TableHead>
-                  <TableHead className="text-[#202328] font-bold text-xs py-3">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[120px]">
                     Joined
                   </TableHead>
-                  <TableHead className="text-[#202328] font-bold text-xs py-3 px-4 text-right">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 px-4 text-right min-w-[100px]">
                     Actions
                   </TableHead>
                 </TableRow>

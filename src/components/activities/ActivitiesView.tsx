@@ -320,19 +320,19 @@ export function ActivitiesView() {
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-neutral-100/95 backdrop-blur-xs shadow-2xs">
                 <TableRow className="border-b border-black/[0.06] hover:bg-transparent">
-                  <TableHead className="text-[#202328] font-bold text-xs py-3 px-4">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 px-4 min-w-[160px]">
                     Activity Type
                   </TableHead>
-                  <TableHead className="text-[#202328] font-bold text-xs py-3">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[130px]">
                     Client Name
                   </TableHead>
-                  <TableHead className="text-[#202328] font-bold text-xs py-3">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[220px] max-w-[440px]">
                     Activity Details
                   </TableHead>
-                  <TableHead className="text-[#202328] font-bold text-xs py-3">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[120px]">
                     Timestamp
                   </TableHead>
-                  <TableHead className="text-[#202328] font-bold text-xs py-3 text-right px-4">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 text-right px-4 min-w-[130px]">
                     Status / Outcome
                   </TableHead>
                 </TableRow>
@@ -353,24 +353,28 @@ export function ActivitiesView() {
                       key={item.id}
                       className="border-b border-black/[0.04] hover:bg-black/[0.02] transition-colors"
                     >
-                      <TableCell className="font-bold text-[#202328] text-xs px-4">
+                      <TableCell className="font-bold text-[#202328] text-xs px-4 py-3.5 align-top min-w-[160px]">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-[#202328]/5 border border-black/10 flex items-center justify-center">
+                          <div className="w-7 h-7 rounded-lg bg-[#202328]/5 border border-black/10 flex items-center justify-center shrink-0">
                             {getIcon(item.type)}
                           </div>
                           <span>{item.title}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-[#202328] font-semibold text-xs">
+                      <TableCell className="text-[#202328] font-semibold text-xs py-3.5 align-top min-w-[130px]">
                         {item.client}
                       </TableCell>
-                      <TableCell className="text-neutral-500 text-xs">
-                        {item.detail}
+                      <TableCell className="py-3.5 align-top min-w-[220px] max-w-[440px] whitespace-normal">
+                        <div className="flex items-start">
+                          <span className="inline-flex border border-black/10 text-xs bg-white text-[#202328] font-medium px-2.5 py-1.5 rounded-xl shadow-2xs max-w-full whitespace-normal break-words leading-relaxed text-left">
+                            {item.detail}
+                          </span>
+                        </div>
                       </TableCell>
-                      <TableCell className="text-neutral-400 text-xs font-medium">
+                      <TableCell className="text-neutral-400 text-xs font-medium py-3.5 align-top min-w-[120px]">
                         {item.timestamp}
                       </TableCell>
-                      <TableCell className="text-right px-4">
+                      <TableCell className="text-right px-4 py-3.5 align-top min-w-[130px]">
                         <span className="inline-flex items-center gap-1 bg-[#F6CE46]/25 border border-[#F6CE46]/40 text-[#202328] text-[11px] font-bold px-2.5 py-0.5 rounded-full shadow-2xs">
                           {item.badge}
                         </span>

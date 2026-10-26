@@ -187,22 +187,22 @@ export function AnonymousQuestionsTable() {
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-neutral-100/95 backdrop-blur-xs shadow-2xs">
                 <TableRow className="border-b border-black/[0.06] hover:bg-transparent">
-                  <TableHead className="text-[#202328] font-bold text-xs py-3 px-4 w-28">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 px-4 w-28 shrink-0">
                     Ref #
                   </TableHead>
-                  <TableHead className="text-[#202328] font-bold text-xs py-3 w-48">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[130px]">
                     Category
                   </TableHead>
-                  <TableHead className="text-[#202328] font-bold text-xs py-3">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[280px] max-w-[500px]">
                     Question Content
                   </TableHead>
-                  <TableHead className="text-[#202328] font-bold text-xs py-3 w-36">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[120px]">
                     Received
                   </TableHead>
-                  <TableHead className="text-[#202328] font-bold text-xs py-3 w-32">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[120px]">
                     Status
                   </TableHead>
-                  <TableHead className="text-[#202328] font-bold text-xs py-3 text-right px-4 w-32">
+                  <TableHead className="text-[#202328] font-bold text-xs py-3 text-right px-4 min-w-[110px]">
                     Action
                   </TableHead>
                 </TableRow>
@@ -211,17 +211,16 @@ export function AnonymousQuestionsTable() {
                 {isQuestionsLoading ? (
                   Array.from({ length: 5 }).map((_, idx) => (
                     <TableRow key={`aq-skel-${idx}`} className="border-b border-black/[0.04]">
-                      <TableCell className="px-4 py-3"><Skeleton className="h-4 w-16 rounded-md" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-28 rounded-full" /></TableCell>
-                      <TableCell>
+                      <TableCell className="px-4 py-3 align-top"><Skeleton className="h-4 w-16 rounded-md" /></TableCell>
+                      <TableCell className="align-top"><Skeleton className="h-5 w-24 rounded-full" /></TableCell>
+                      <TableCell className="align-top">
                         <div className="space-y-1">
-                          <Skeleton className="h-3.5 w-72" />
-                          <Skeleton className="h-2.5 w-40" />
+                          <Skeleton className="h-10 w-full rounded-xl" />
                         </div>
                       </TableCell>
-                      <TableCell><Skeleton className="h-3.5 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-18 rounded-full" /></TableCell>
-                      <TableCell className="text-right px-4"><Skeleton className="h-6 w-16 rounded-full ml-auto" /></TableCell>
+                      <TableCell className="align-top"><Skeleton className="h-3.5 w-24" /></TableCell>
+                      <TableCell className="align-top"><Skeleton className="h-5 w-18 rounded-full" /></TableCell>
+                      <TableCell className="text-right px-4 align-top"><Skeleton className="h-6 w-16 rounded-full ml-auto" /></TableCell>
                     </TableRow>
                   ))
                 ) : filteredQuestions.length === 0 ? (
@@ -251,25 +250,27 @@ export function AnonymousQuestionsTable() {
                       key={q.id}
                       className="border-b border-black/[0.04] hover:bg-black/[0.02] transition-colors"
                     >
-                      <TableCell className="font-mono text-xs font-bold text-[#202328] px-4">
+                      <TableCell className="font-mono text-xs font-bold text-[#202328] px-4 py-3.5 align-top">
                         {q.referenceNumber}
                       </TableCell>
-                      <TableCell>
-                        <span className="bg-[#202328]/5 border border-black/10 text-[#202328] font-semibold text-[11px] px-2.5 py-1 rounded-full whitespace-nowrap">
+                      <TableCell className="py-3.5 align-top min-w-[130px]">
+                        <span className="bg-[#202328]/5 border border-black/10 text-[#202328] font-semibold text-[11px] px-2.5 py-1 rounded-full inline-block">
                           {q.category}
                         </span>
                       </TableCell>
-                      <TableCell className="max-w-md">
-                        <p className="text-xs text-[#202328] font-medium line-clamp-2">
-                          "{q.question}"
-                        </p>
-                        {q.answer && (
-                          <p className="text-[11px] text-neutral-500 mt-1 line-clamp-1 italic">
-                            ↳ Answer: {q.answer}
-                          </p>
-                        )}
+                      <TableCell className="py-3.5 align-top min-w-[280px] max-w-[500px] whitespace-normal">
+                        <div className="flex flex-col items-start gap-1.5">
+                          <div className="border border-black/10 bg-white text-xs text-[#202328] font-medium px-3 py-1.5 rounded-xl shadow-2xs max-w-full whitespace-normal break-words leading-relaxed text-left">
+                            "{q.question}"
+                          </div>
+                          {q.answer && (
+                            <div className="text-[11px] text-neutral-600 bg-neutral-100/90 border border-black/5 rounded-lg px-2.5 py-1 whitespace-normal break-words leading-normal max-w-full text-left">
+                              <span className="font-semibold text-neutral-700">↳ Answer:</span> {q.answer}
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
-                      <TableCell className="text-neutral-500 text-xs font-medium">
+                      <TableCell className="text-neutral-500 text-xs font-medium py-3.5 align-top min-w-[120px]">
                         {q.submittedAt}
                       </TableCell>
                       <TableCell>

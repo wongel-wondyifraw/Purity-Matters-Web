@@ -641,7 +641,7 @@ export function ResourcesTable() {
                     <TableHead className="text-[#202328] font-bold text-xs py-3 px-4">
                       Order # & Date
                     </TableHead>
-                    <TableHead className="text-[#202328] font-bold text-xs py-3">
+                    <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[180px] max-w-[280px]">
                       Resource Title
                     </TableHead>
                     <TableHead className="text-[#202328] font-bold text-xs py-3">
@@ -716,11 +716,15 @@ export function ResourcesTable() {
                             </div>
                           </TableCell>
 
-                          <TableCell className="font-semibold text-xs text-[#202328] max-w-[200px]">
-                            <p className="truncate">{order.resourceTitle}</p>
-                            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.2 rounded">
-                              {order.resourceType.toUpperCase()}
-                            </span>
+                          <TableCell className="py-3.5 align-top min-w-[180px] max-w-[280px] whitespace-normal">
+                            <div className="flex flex-col items-start gap-1">
+                              <span className="inline-flex border border-black/10 text-xs bg-white text-[#202328] font-semibold px-2.5 py-1 rounded-xl shadow-2xs max-w-full whitespace-normal break-words leading-relaxed text-left">
+                                {order.resourceTitle}
+                              </span>
+                              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full mt-0.5">
+                                {order.resourceType.toUpperCase()}
+                              </span>
+                            </div>
                           </TableCell>
 
                           <TableCell>

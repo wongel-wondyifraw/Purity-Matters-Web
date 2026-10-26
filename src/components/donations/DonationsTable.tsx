@@ -398,7 +398,7 @@ export function DonationsTable() {
                         </TableCell>
 
                         {/* Donor Details */}
-                        <TableCell className="py-3 align-top">
+                        <TableCell className="py-3.5 align-top min-w-[160px] whitespace-normal">
                           <div className="text-xs font-bold text-[#202328] leading-tight">
                             {item.clientName}
                           </div>
@@ -471,11 +471,13 @@ export function DonationsTable() {
                         </TableCell>
 
                         {/* Admin Notes */}
-                        <TableCell className="py-3 align-top max-w-[200px]">
+                        <TableCell className="py-3.5 align-top min-w-[180px] max-w-[320px] whitespace-normal">
                           {item.adminNotes ? (
-                            <span className="text-xs text-neutral-600 line-clamp-2" title={item.adminNotes}>
-                              {item.adminNotes}
-                            </span>
+                            <div className="flex items-start">
+                              <span className="inline-flex border border-black/10 text-xs bg-white text-[#202328] font-medium px-2.5 py-1 rounded-xl shadow-2xs max-w-full whitespace-normal break-words leading-relaxed text-left" title={item.adminNotes}>
+                                {item.adminNotes}
+                              </span>
+                            </div>
                           ) : (
                             <span className="text-[11px] text-neutral-300 italic">—</span>
                           )}

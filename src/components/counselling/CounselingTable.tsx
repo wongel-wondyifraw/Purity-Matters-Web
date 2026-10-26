@@ -134,25 +134,25 @@ export function CounselingTable() {
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-neutral-100/95 backdrop-blur-xs shadow-2xs">
                 <TableRow className="border-b border-black/[0.06] hover:bg-transparent">
-                <TableHead className="text-[#202328] font-bold text-xs py-3 px-4">
+                <TableHead className="text-[#202328] font-bold text-xs py-3 px-4 w-32 shrink-0">
                   Ref #
                 </TableHead>
-                <TableHead className="text-[#202328] font-bold text-xs py-3">
+                <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[140px]">
                   Client
                 </TableHead>
-                <TableHead className="text-[#202328] font-bold text-xs py-3">
+                <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[240px] max-w-[420px]">
                   Concern Area
                 </TableHead>
-                <TableHead className="text-[#202328] font-bold text-xs py-3">
+                <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[120px]">
                   Preferred Method
                 </TableHead>
-                <TableHead className="text-[#202328] font-bold text-xs py-3">
+                <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[120px]">
                   Status
                 </TableHead>
-                <TableHead className="text-[#202328] font-bold text-xs py-3">
+                <TableHead className="text-[#202328] font-bold text-xs py-3 min-w-[120px]">
                   Assigned To
                 </TableHead>
-                <TableHead className="text-[#202328] font-bold text-xs py-3 text-right px-4">
+                <TableHead className="text-[#202328] font-bold text-xs py-3 text-right px-4 min-w-[100px]">
                   Actions
                 </TableHead>
               </TableRow>
@@ -161,18 +161,18 @@ export function CounselingTable() {
               {isCounselingLoading ? (
                 Array.from({ length: 5 }).map((_, idx) => (
                   <TableRow key={`cn-skel-${idx}`} className="border-b border-black/[0.04]">
-                    <TableCell className="px-4 py-3"><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
-                    <TableCell>
+                    <TableCell className="px-4 py-3 align-top"><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+                    <TableCell className="align-top">
                       <div className="space-y-1">
                         <Skeleton className="h-4 w-32" />
                         <Skeleton className="h-2.5 w-24" />
                       </div>
                     </TableCell>
-                    <TableCell><Skeleton className="h-5 w-28 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell className="text-right px-4"><Skeleton className="h-7 w-20 rounded-full ml-auto" /></TableCell>
+                    <TableCell className="align-top"><Skeleton className="h-9 w-48 rounded-xl" /></TableCell>
+                    <TableCell className="align-top"><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell className="align-top"><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+                    <TableCell className="align-top"><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell className="text-right px-4 align-top"><Skeleton className="h-7 w-20 rounded-full ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : filteredCounseling.length === 0 ? (
@@ -202,12 +202,12 @@ export function CounselingTable() {
                     key={item.id}
                     className="border-b border-black/[0.04] hover:bg-black/[0.02] transition-colors"
                   >
-                    <TableCell className="px-4">
+                    <TableCell className="px-4 py-3.5 align-top">
                       <span className="text-[#202328] font-bold text-xs bg-black/[0.04] rounded-full px-2.5 py-1 border border-black/10 font-mono">
                         {item.referenceNumber}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-3.5 align-top min-w-[140px]">
                       <div className="font-bold text-[#202328] text-sm">
                         {item.clientName}
                       </div>
@@ -215,15 +215,22 @@ export function CounselingTable() {
                         {item.phone}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <span className="border border-black/10 text-xs bg-white text-[#202328] font-semibold px-2.5 py-1 rounded-full shadow-2xs">
-                        {item.concern}
-                      </span>
+                    <TableCell className="py-3.5 align-top min-w-[240px] max-w-[420px] whitespace-normal">
+                      <div className="flex flex-col items-start gap-1">
+                        <div className="inline-flex border border-black/10 text-xs bg-white text-[#202328] font-semibold px-3 py-1.5 rounded-xl shadow-2xs max-w-full whitespace-normal break-words leading-relaxed text-left">
+                          {item.concern}
+                        </div>
+                        {item.description && item.description.trim() !== item.concern.trim() && (
+                          <p className="text-[11px] text-neutral-500 whitespace-normal break-words leading-normal px-1 line-clamp-2">
+                            {item.description}
+                          </p>
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-neutral-700 text-xs font-medium">
+                    <TableCell className="text-neutral-700 text-xs font-medium py-3.5 align-top min-w-[120px]">
                       {item.preferredMethod}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-3.5 align-top min-w-[120px]">
                       <span
                         className={`text-xs font-semibold px-2.5 py-1 rounded-full shadow-2xs ${
                           item.status === "pending"
@@ -238,10 +245,10 @@ export function CounselingTable() {
                         {item.status.toUpperCase()}
                       </span>
                     </TableCell>
-                    <TableCell className="text-neutral-700 text-xs font-semibold">
+                    <TableCell className="text-neutral-700 text-xs font-semibold py-3.5 align-top min-w-[120px]">
                       {item.assignedTo || "—"}
                     </TableCell>
-                    <TableCell className="text-right px-4">
+                    <TableCell className="text-right px-4 py-3.5 align-top min-w-[100px]">
                       <Dialog>
                         <DialogTrigger className="inline-flex items-center justify-center rounded-full text-xs font-semibold transition-all bg-[#202328] hover:bg-black text-white h-7 px-3.5 shadow-2xs cursor-pointer">
                           Manage

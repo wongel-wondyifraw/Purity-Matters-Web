@@ -3,10 +3,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, ChevronDown, ShieldCheck, Mail, PieChart, Download, RefreshCw } from "lucide-react";
+import { LogOut, ChevronDown, ShieldCheck, Mail, PieChart, Download, RefreshCw, Rocket } from "lucide-react";
 import { useAdminData } from "@/context/AdminDataContext";
 import { useAuth } from "@/context/AuthContext";
 import { usePwa } from "@/context/PwaContext";
+import { BroadcastBotUpdateModal } from "./BroadcastBotUpdateModal";
 
 interface NavItem {
   label: string;
@@ -37,6 +38,7 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
   const { isStandalone, installPwa } = usePwa();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Close profile dropdown when clicking outside
@@ -176,6 +178,19 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
             <span className="hidden sm:inline">Refresh</span>
           </button>
 
+          {/* Update Bot Broadcast Button */}
+          <button
+            type="button"
+            id="header-update-bot-btn"
+            onClick={() => setIsBroadcastModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 hover:bg-white text-xs font-semibold text-[#202328] border border-black/10 hover:border-black/20 shadow-2xs transition-all active:scale-95 cursor-pointer"
+            title="Broadcast version update to all Telegram bot clients"
+            aria-label="Update Bot"
+          >
+            <Rocket className="w-3.5 h-3.5 text-amber-500" />
+            <span className="hidden sm:inline">Update Bot</span>
+          </button>
+
           {/* User Account Flat Indicator & Dropdown */}
           <div className="relative" ref={profileMenuRef}>
             <button
@@ -264,6 +279,12 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
           </div>
         </div>
       </div>
+
+      {/* Broadcast Bot Update Modal */}
+      <BroadcastBotUpdateModal
+        isOpen={isBroadcastModalOpen}
+        onClose={() => setIsBroadcastModalOpen(false)}
+      />
     </header>
   );
 }

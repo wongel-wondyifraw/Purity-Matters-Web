@@ -368,28 +368,28 @@ export function CourseEnrollmentsTable() {
           <Table>
             <TableHeader className="bg-[#F7F8FA] dark:bg-[#202328]/50">
               <TableRow className="border-b border-[#EBECEF] dark:border-[#202328]">
-                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5">
+                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5 min-w-[150px]">
                   Student / User
                 </TableHead>
-                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5">
+                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5 min-w-[180px] max-w-[280px]">
                   Course
                 </TableHead>
-                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5">
+                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5 min-w-[140px]">
                   Payment Status
                 </TableHead>
-                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5">
+                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5 min-w-[130px]">
                   Progress
                 </TableHead>
-                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5">
+                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5 min-w-[160px] max-w-[240px]">
                   Current Module
                 </TableHead>
-                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5">
+                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5 min-w-[120px]">
                   Course Status
                 </TableHead>
-                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5">
+                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5 min-w-[130px]">
                   Enrolled / Active
                 </TableHead>
-                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5 text-right">
+                <TableHead className="text-xs font-bold uppercase text-[#5E6470] dark:text-[#8C92A0] py-3.5 text-right min-w-[120px]">
                   Actions
                 </TableHead>
               </TableRow>
@@ -428,7 +428,7 @@ export function CourseEnrollmentsTable() {
                       className="border-b border-[#EBECEF] dark:border-[#202328] hover:bg-[#F7F8FA]/60 dark:hover:bg-[#202328]/40 transition-colors"
                     >
                       {/* Student info */}
-                      <TableCell className="py-3.5 font-medium text-xs text-[#202328] dark:text-[#EBECEF]">
+                      <TableCell className="py-3.5 font-medium text-xs text-[#202328] dark:text-[#EBECEF] align-top min-w-[150px]">
                         <div>
                           <span className="font-bold block">{item.clientName}</span>
                           <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[#5E6470] dark:text-[#8C92A0]">
@@ -446,23 +446,25 @@ export function CourseEnrollmentsTable() {
                       </TableCell>
 
                       {/* Course info */}
-                      <TableCell className="py-3.5 text-xs text-[#202328] dark:text-[#EBECEF]">
-                        <span className="font-semibold block truncate max-w-[180px]">
-                          {item.courseName}
-                        </span>
-                        <span
-                          className={`inline-block px-1.5 py-0.2 rounded text-[10px] font-semibold mt-0.5 ${
-                            isPaid
-                              ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
-                              : "bg-purple-500/15 text-purple-700 dark:text-purple-300"
-                          }`}
-                        >
-                          {isPaid ? `Paid (${item.amount} ${item.currency})` : "Free Course"}
-                        </span>
+                      <TableCell className="py-3.5 text-xs text-[#202328] dark:text-[#EBECEF] min-w-[180px] max-w-[280px] whitespace-normal align-top">
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="font-semibold block text-xs whitespace-normal break-words leading-snug">
+                            {item.courseName}
+                          </span>
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                              isPaid
+                                ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/25"
+                                : "bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/25"
+                            }`}
+                          >
+                            {isPaid ? `Paid (${item.amount} ${item.currency})` : "Free Course"}
+                          </span>
+                        </div>
                       </TableCell>
 
                       {/* Payment Status */}
-                      <TableCell className="py-3.5">
+                      <TableCell className="py-3.5 align-top min-w-[140px]">
                         {item.courseType === "free" ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
                             Free Access
@@ -485,7 +487,7 @@ export function CourseEnrollmentsTable() {
                       </TableCell>
 
                       {/* Progress bar */}
-                      <TableCell className="py-3.5 text-xs text-[#202328] dark:text-[#EBECEF]">
+                      <TableCell className="py-3.5 text-xs text-[#202328] dark:text-[#EBECEF] align-top min-w-[130px]">
                         <div className="w-28 space-y-1">
                           <div className="flex items-center justify-between text-[11px] font-bold">
                             <span>{item.progressPercent}%</span>
@@ -507,12 +509,16 @@ export function CourseEnrollmentsTable() {
                       </TableCell>
 
                       {/* Current Module */}
-                      <TableCell className="py-3.5 text-xs text-[#5E6470] dark:text-[#8C92A0] max-w-[150px] truncate">
-                        {item.currentModuleTitle || "Module 1"}
+                      <TableCell className="py-3.5 text-xs text-[#5E6470] dark:text-[#8C92A0] min-w-[160px] max-w-[240px] whitespace-normal align-top">
+                        <div className="flex items-start">
+                          <span className="inline-flex border border-black/10 dark:border-white/10 text-xs bg-white dark:bg-[#202328] px-2.5 py-1 rounded-xl shadow-2xs max-w-full whitespace-normal break-words leading-relaxed text-left font-medium" title={item.currentModuleTitle}>
+                            {item.currentModuleTitle || "Module 1"}
+                          </span>
+                        </div>
                       </TableCell>
 
                       {/* Status */}
-                      <TableCell className="py-3.5">
+                      <TableCell className="py-3.5 align-top min-w-[120px]">
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
                             item.status === "completed"
@@ -531,7 +537,7 @@ export function CourseEnrollmentsTable() {
                       </TableCell>
 
                       {/* Dates */}
-                      <TableCell className="py-3.5 text-[11px] text-[#5E6470] dark:text-[#8C92A0]">
+                      <TableCell className="py-3.5 text-[11px] text-[#5E6470] dark:text-[#8C92A0] align-top min-w-[130px]">
                         <div>
                           <span className="block font-medium text-[#202328] dark:text-[#EBECEF]">
                             {formatDate(item.createdAt)}
