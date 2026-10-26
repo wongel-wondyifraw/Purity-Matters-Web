@@ -214,7 +214,7 @@ export function PullToRefresh({
     <div
       ref={containerRef}
       id="pull-to-refresh-container"
-      className={`relative w-full h-full flex flex-col ${className}`}
+      className={`relative w-full min-h-full flex flex-col ${className}`}
     >
       {/* Floating Animated Pull & Refresh Indicator Badge */}
       {(isPulling || activeRefreshing || pullDistance > 0) && (
@@ -268,7 +268,7 @@ export function PullToRefresh({
             : "none",
           transition: isPulling ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)",
         }}
-        className="flex-1 flex flex-col min-h-0 w-full"
+        className="flex-1 flex flex-col w-full min-h-full"
       >
         {children}
       </div>

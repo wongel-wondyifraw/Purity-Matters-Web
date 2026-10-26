@@ -178,7 +178,7 @@ export function CoursesTable() {
   ];
 
   return (
-    <div className="flex-1 flex flex-col gap-4 min-h-0 w-full">
+    <div className="w-full flex flex-col gap-4 pb-24">
       {/* 1. TOP KPI METRICS CARDS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 shrink-0">
         <Card className="bg-white/90 backdrop-blur-md border border-black/[0.06] rounded-2xl shadow-2xs p-4 flex flex-col justify-between">
@@ -243,7 +243,7 @@ export function CoursesTable() {
       </div>
 
       {/* 2. MAIN CARD WITH SUB-TABS & ACTIONS */}
-      <Card className="flex-1 flex flex-col min-h-0 bg-white/90 backdrop-blur-md border border-black/[0.06] rounded-2xl shadow-2xs overflow-hidden">
+      <Card className="w-full bg-white/90 backdrop-blur-md border border-black/[0.06] rounded-2xl shadow-2xs overflow-hidden">
         <CardHeader className="shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 border-b border-black/[0.06] pb-3.5 sm:pb-4">
           {/* Left: Tab Switchers */}
           <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -398,10 +398,10 @@ export function CoursesTable() {
         </CardHeader>
 
         {/* 3. CONTENT AREA */}
-        <CardContent className="flex-1 flex flex-col min-h-0 pt-4 p-4 overflow-hidden">
+        <CardContent className="p-4 sm:p-5 pt-4">
           {activeTab === "courses" ? (
             /* SUB-TAB 1: COURSE MANAGEMENT CARDS */
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+            <div className="w-full">
               {isCourseCatalogLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {Array.from({ length: 6 }).map((_, idx) => (
@@ -564,13 +564,13 @@ export function CoursesTable() {
             </div>
           ) : activeTab === "enrollments" ? (
             /* SUB-TAB 2: COURSE ENROLMENTS & PROGRESS TABLE */
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+            <div className="w-full">
               <CourseEnrollmentsTable />
             </div>
           ) : (
             /* SUB-TAB 3: CLIENT JOURNEYS PROGRESS TABLE */
-            <div className="flex-1 flex flex-col min-h-0 overflow-hidden border border-black/[0.06] rounded-2xl bg-white/50 shadow-2xs">
-              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
+            <div className="w-full overflow-hidden border border-black/[0.06] rounded-2xl bg-white/50 shadow-2xs">
+              <div className="w-full overflow-x-auto">
                 <Table>
                   <TableHeader className="sticky top-0 z-10 bg-neutral-100/95 backdrop-blur-xs shadow-2xs">
                     <TableRow className="border-b border-black/[0.06] hover:bg-transparent">

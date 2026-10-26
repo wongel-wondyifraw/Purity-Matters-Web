@@ -205,7 +205,7 @@ export function CourseDetailsView({ courseId }: CourseDetailsViewProps) {
   const bannerUrl = course.bannerImage ? getFullFileUrl(course.bannerImage) : null;
 
   return (
-    <div className="flex-1 flex flex-col gap-4 sm:gap-6 min-h-0 w-full max-w-6xl mx-auto pb-8">
+    <div className="w-full max-w-6xl mx-auto flex flex-col gap-4 sm:gap-6 pb-24">
       {/* 1. TOP BREADCRUMB / BACK LINK */}
       <div className="flex items-center justify-between">
         <Link
