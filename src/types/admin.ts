@@ -189,4 +189,24 @@ export interface ResourceOrderRecord {
   createdAt: string;
 }
 
+export interface DonationRecord {
+  id: number;
+  referenceNumber: string;
+  telegramId: string;
+  clientName: string;
+  clientUsername?: string | null;
+  clientPhone?: string | null;
+  amount: number;
+  currency: string;
+  paymentMethod: string;
+  status: "pending" | "payment_submitted" | "verified" | "rejected";
+  transactionReference?: string | null;
+  notes?: string | null;
+  adminNotes?: string | null;
+  verifiedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+
 

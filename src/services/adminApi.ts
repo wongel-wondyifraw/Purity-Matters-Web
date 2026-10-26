@@ -11,6 +11,7 @@ import {
   NewCounselingPayload,
   PaymentSettingsResponse,
   ResourceOrderRecord,
+  DonationRecord,
 } from "@/types/admin";
 import { ConsoleUser } from "@/types/auth";
 
@@ -718,4 +719,84 @@ export async function deleteResourceOrderApi(id: number): Promise<boolean> {
   }
   return true;
 }
+
+// ==========================================
+// DONATIONS API
+// ==========================================
+
+export async function fetchDonationsApi(
+  status?: string,
+  search?: string
+): Promise<DonationRecord[]> {
+  const query = new URLSearchParams();
+  if (status && status !== "all") query.set("status", status);
+  if (search) query.set("search", search);
+
+  const qs = query.toString();
+  const res = await adminFetch(`/api/admin/donations${qs ? `?${qs}` : ""}`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch donations");
+  }
+  const data = await res.json();
+  return (data || []).map((d: any) => ({
+    ...d,
+    createdAt: formatDateTime(d.createdAt),
+    updatedAt: formatDateTime(d.updatedAt),
+    verifiedAt: d.verifiedAt ? formatDateTime(d.verifiedAt) : null,
+  }));
+}
+
+export async function verifyDonationApi(
+  id: number,
+  adminNotes?: string
+): Promise<{ success: boolean; donation: DonationRecord }> {
+  const res = await adminFetch(`/api/admin/donations/${id}/verify`, {
+    method: "POST",
+    body: JSON.stringify({ adminNotes }),
+  });
+  if (!res.ok) {
+    let msg = `Failed to verify donation #${id}`;
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function rejectDonationApi(
+  id: number,
+  reason?: string
+): Promise<{ success: boolean; donation: DonationRecord }> {
+  const res = await adminFetch(`/api/admin/donations/${id}/reject`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
+  if (!res.ok) {
+    let msg = `Failed to reject donation #${id}`;
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function deleteDonationApi(id: number): Promise<boolean> {
+  const res = await adminFetch(`/api/admin/donations/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok && res.status !== 404) {
+    let msg = `Failed to delete donation #${id}`;
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return true;
+}
+
 

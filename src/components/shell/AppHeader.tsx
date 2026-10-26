@@ -25,7 +25,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Inner Healing", href: "/inner-healing", description: "Inner Healing" },
   { label: "Courses", href: "/courses", description: "Courses & Journeys" },
   { label: "Resources", href: "/resources", description: "Resources & Ebooks" },
-  { label: "Anonymous Questions", href: "/anonymous-questions", description: "Anonymous Questions" },
+  { label: "Donations", href: "/donations", description: "Ministry Donations & Giving" },
+  { label: "Questions", href: "/anonymous-questions", description: "Anonymous Questions" },
   { label: "Users", href: "/users", description: "Console Users & Access Management" },
 ];
 
@@ -69,9 +70,9 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
   return (
     <header
       id="crextio-header"
-      className="shrink-0 border-b border-black/[0.06] bg-white/70 backdrop-blur-md px-6 py-3.5 z-40 relative"
+      className="shrink-0 border-b border-black/[0.06] bg-white/70 backdrop-blur-md px-4 sm:px-6 py-3 z-40 relative"
     >
-      <div className="w-full flex items-center justify-between gap-4">
+      <div className="w-full flex items-center justify-between gap-3 lg:gap-4">
         {/* Left: Branding Text (No pill background, no shadow) */}
         <Link
           href="/"
@@ -87,7 +88,7 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
         {/* Center: Crextio Pill Navigation Bar */}
         <nav
           id="crextio-nav-pills"
-          className="hidden md:flex items-center gap-1 bg-white/60 p-1 rounded-full border border-black/[0.08] shadow-2xs overflow-x-auto no-scrollbar touch-manipulation select-none"
+          className="hidden md:flex items-center gap-0.5 xl:gap-1 bg-white/60 p-1 rounded-full border border-black/[0.08] shadow-2xs overflow-x-auto no-scrollbar touch-manipulation select-none max-w-full"
         >
           {NAV_ITEMS.map((item) => {
             const isActive =
@@ -99,7 +100,7 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-2.5 py-1 xl:px-3.5 xl:py-1.5 text-[11px] xl:text-xs font-semibold rounded-full transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   isActive
                     ? "bg-[#202328] text-white shadow-xs"
                     : "text-neutral-600 hover:text-[#202328] hover:bg-black/[0.04]"

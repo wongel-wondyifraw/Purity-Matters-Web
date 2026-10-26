@@ -42,6 +42,7 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
     pathname.startsWith("/inner-healing") ||
     pathname.startsWith("/courses") ||
     pathname.startsWith("/resources") ||
+    pathname.startsWith("/donations") ||
     pathname.startsWith("/users") ||
     pathname.startsWith("/reports") ||
     pathname.startsWith("/activities");
@@ -359,6 +360,43 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
                       }`}
                     >
                       Downloads & physical book orders
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 opacity-50 shrink-0" />
+              </button>
+
+              {/* Donations */}
+              <button
+                type="button"
+                id="mobile-nav-donations"
+                onClick={() => handleNavigation("/donations")}
+                className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all touch-manipulation cursor-pointer text-left active:scale-[0.98] ${
+                  pathname.startsWith("/donations")
+                    ? "bg-[#202328] text-white"
+                    : "bg-neutral-50 hover:bg-neutral-100 text-[#202328]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                      pathname.startsWith("/donations")
+                        ? "bg-[#F6CE46] text-[#202328]"
+                        : "bg-white text-[#202328] border border-black/10"
+                    }`}
+                  >
+                    <HeartHandshake className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold leading-tight">Donations & Giving</h4>
+                    <p
+                      className={`text-[10px] mt-0.5 leading-tight ${
+                        pathname.startsWith("/donations")
+                          ? "text-white/70"
+                          : "text-neutral-500"
+                      }`}
+                    >
+                      Telebirr & CBE ministry donations
                     </p>
                   </div>
                 </div>

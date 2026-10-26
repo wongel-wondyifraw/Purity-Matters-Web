@@ -1,5 +1,5 @@
 // Service Worker for Purity Matters Web Console PWA
-const CACHE_NAME = "purity-matters-pwa-v3";
+const CACHE_NAME = "purity-matters-pwa-v4";
 const STATIC_ASSETS = [
   "/manifest.json",
   "/icons/icon-192x192.png",
@@ -52,8 +52,26 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Only handle static assets (_next/static and icons)
-  if (url.pathname.startsWith("/_next/static") || url.pathname.startsWith("/icons")) {
+  // Next.js chunks: network-first so live updates and newly added tabs appear immediately
+  if (url.pathname.startsWith("/_next/static")) {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Static icon assets: cache-first
+  if (url.pathname.startsWith("/icons")) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) return cachedResponse;

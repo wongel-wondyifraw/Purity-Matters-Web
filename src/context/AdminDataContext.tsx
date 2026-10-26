@@ -24,6 +24,7 @@ import {
   PaymentAccountDetail,
   PaymentSettingsResponse,
   ResourceOrderRecord,
+  DonationRecord,
 } from "@/types/admin";
 import { ConsoleUser } from "@/types/auth";
 import { useToast } from "@/components/ui/toast";
@@ -59,6 +60,10 @@ import {
   rejectResourceOrderPaymentApi,
   deletePhysicalOrderApi,
   deleteResourceOrderApi,
+  fetchDonationsApi,
+  verifyDonationApi,
+  rejectDonationApi,
+  deleteDonationApi,
   NewClientPayload,
 } from "@/services/adminApi";
 
@@ -77,6 +82,7 @@ export interface AdminDataContextType {
   systemUsers: ConsoleUser[];
   paymentSettings: PaymentSettingsResponse | null;
   resourceOrders: ResourceOrderRecord[];
+  donations: DonationRecord[];
 
   // Server & Connection State
   apiUrl: string;
@@ -91,12 +97,15 @@ export interface AdminDataContextType {
   isQuestionsLoading: boolean;
   isPaymentSettingsLoading: boolean;
   isResourceOrdersLoading: boolean;
+  isDonationsLoading: boolean;
 
   // Filter State
   clientFilter: string;
   setClientFilter: (filter: string) => void;
   counselingFilter: string;
   setCounselingFilter: (filter: string) => void;
+  donationsFilter: string;
+  setDonationsFilter: (filter: string) => void;
 
   // Clipboard Helper
   copiedId: string | null;
@@ -118,6 +127,8 @@ export interface AdminDataContextType {
   innerHealingCount: number;
   coursesCount: number;
   resourceCount: number;
+  donationCount: number;
+  totalDonatedAmount: number;
 
   // Mutations & Actions
   syncWithRemoteBackend: (manual?: boolean) => Promise<void>;
@@ -162,6 +173,9 @@ export interface AdminDataContextType {
   }) => Promise<boolean>;
   confirmResourceOrderPayment: (id: number, notes?: string) => Promise<boolean>;
   rejectResourceOrderPayment: (id: number, reason?: string) => Promise<boolean>;
+  verifyDonation: (id: number, adminNotes?: string) => Promise<boolean>;
+  rejectDonation: (id: number, reason?: string) => Promise<boolean>;
+  deleteDonation: (id: number) => Promise<boolean>;
   exportClientsCsv: () => void;
 }
 
@@ -175,6 +189,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   // Local UI filters & clipboard state
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [counselingFilter, setCounselingFilter] = useState<string>("all");
+  const [donationsFilter, setDonationsFilter] = useState<string>("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
@@ -280,6 +295,13 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     refetchIntervalInBackground: false,
   });
 
+  const donationsQuery = useQuery<DonationRecord[]>({
+    queryKey: ["admin", "donations"],
+    queryFn: () => fetchDonationsApi(),
+    refetchInterval: 15000,
+    refetchIntervalInBackground: false,
+  });
+
   const isClientsLoading = clientsQuery.isLoading;
   const isCounselingLoading = counselingQuery.isLoading;
   const isInnerHealingLoading = innerHealingQuery.isLoading;
@@ -289,6 +311,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const isQuestionsLoading = questionsQuery.isLoading;
   const isPaymentSettingsLoading = paymentSettingsQuery.isLoading;
   const isResourceOrdersLoading = resourceOrdersQuery.isLoading;
+  const isDonationsLoading = donationsQuery.isLoading;
 
   const isLoading =
     isClientsLoading ||
@@ -296,7 +319,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     isCatalogLoading ||
     isOrdersLoading ||
     isQuestionsLoading ||
-    isResourceOrdersLoading;
+    isResourceOrdersLoading ||
+    isDonationsLoading;
 
   const clients = useMemo(() => clientsQuery.data || [], [clientsQuery.data]);
   const counselingRequests = useMemo(() => counselingQuery.data || [], [counselingQuery.data]);
@@ -309,6 +333,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const anonymousQuestions = useMemo(() => questionsQuery.data || [], [questionsQuery.data]);
   const paymentSettings = paymentSettingsQuery.data ?? null;
   const resourceOrders = useMemo(() => resourceOrdersQuery.data || [], [resourceOrdersQuery.data]);
+  const donations = useMemo(() => donationsQuery.data || [], [donationsQuery.data]);
 
   // =================== MUTATIONS ===================
 
@@ -632,6 +657,46 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  const verifyDonationMutation = useMutation({
+    mutationFn: ({ id, adminNotes }: { id: number; adminNotes?: string }) =>
+      verifyDonationApi(id, adminNotes),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "donations"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+      toast.success("Donation Verified", "The donation has been confirmed successfully.");
+    },
+    onError: (err: any) => {
+      toast.error("Verification Error", err.message || "Failed to verify donation.");
+    },
+  });
+
+  const rejectDonationMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: number; reason?: string }) =>
+      rejectDonationApi(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "donations"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+      toast.success("Donation Rejected", "Donation record updated.");
+    },
+    onError: (err: any) => {
+      toast.error("Rejection Error", err.message || "Failed to reject donation.");
+    },
+  });
+
+  const deleteDonationMutation = useMutation({
+    mutationFn: deleteDonationApi,
+    onSuccess: (_, id) => {
+      queryClient.setQueryData<DonationRecord[]>(["admin", "donations"], (old = []) =>
+        old.filter((d) => d.id !== id)
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+      toast.success("Deleted", "Donation record removed.");
+    },
+    onError: (err: any) => {
+      toast.error("Delete Error", err.message || "Failed to delete donation.");
+    },
+  });
+
   const deletePhysicalOrderMutation = useMutation({
     mutationFn: deletePhysicalOrderApi,
     onSuccess: async (_, id) => {
@@ -945,6 +1010,42 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     [deleteResourceOrderMutation]
   );
 
+  const verifyDonation = useCallback(
+    async (id: number, adminNotes?: string): Promise<boolean> => {
+      try {
+        await verifyDonationMutation.mutateAsync({ id, adminNotes });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [verifyDonationMutation]
+  );
+
+  const rejectDonation = useCallback(
+    async (id: number, reason?: string): Promise<boolean> => {
+      try {
+        await rejectDonationMutation.mutateAsync({ id, reason });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [rejectDonationMutation]
+  );
+
+  const deleteDonation = useCallback(
+    async (id: number): Promise<boolean> => {
+      try {
+        await deleteDonationMutation.mutateAsync(id);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [deleteDonationMutation]
+  );
+
   const copyToClipboard = useCallback(
     (text: string, idKey: string) => {
       navigator.clipboard?.writeText(text);
@@ -1086,6 +1187,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       systemUsers,
       paymentSettings,
       resourceOrders,
+      donations,
       apiUrl,
       isRefreshing,
       isLoading,
@@ -1098,10 +1200,13 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       isQuestionsLoading,
       isPaymentSettingsLoading,
       isResourceOrdersLoading,
+      isDonationsLoading,
       clientFilter,
       setClientFilter,
       counselingFilter,
       setCounselingFilter,
+      donationsFilter,
+      setDonationsFilter,
       copiedId,
       copyToClipboard,
       totalClients,
@@ -1119,6 +1224,10 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       innerHealingCount,
       coursesCount,
       resourceCount,
+      donationCount: donations.length,
+      totalDonatedAmount: donations
+        .filter((d) => d.status === "verified")
+        .reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0),
       syncWithRemoteBackend,
       hardRefresh,
       addClient,
@@ -1139,6 +1248,9 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       rejectResourceOrderPayment,
       deletePhysicalOrder,
       deleteResourceOrder,
+      verifyDonation,
+      rejectDonation,
+      deleteDonation,
       exportClientsCsv,
     }),
     [
@@ -1153,6 +1265,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       systemUsers,
       paymentSettings,
       resourceOrders,
+      donations,
       apiUrl,
       isRefreshing,
       isLoading,
@@ -1165,8 +1278,10 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       isQuestionsLoading,
       isPaymentSettingsLoading,
       isResourceOrdersLoading,
+      isDonationsLoading,
       clientFilter,
       counselingFilter,
+      donationsFilter,
       copiedId,
       copyToClipboard,
       totalClients,
@@ -1204,6 +1319,9 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       rejectResourceOrderPayment,
       deletePhysicalOrder,
       deleteResourceOrder,
+      verifyDonation,
+      rejectDonation,
+      deleteDonation,
       exportClientsCsv,
     ]
   );
