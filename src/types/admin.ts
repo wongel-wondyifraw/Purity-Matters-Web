@@ -73,6 +73,102 @@ export interface CourseProgressRecord {
   lastActive: string;
 }
 
+export interface CourseMaterialItem {
+  id: number;
+  sectionId: number;
+  title: string;
+  fileName: string;
+  filePath: string;
+  fileSizeBytes?: number | null;
+  fileMimeType?: string | null;
+  fileType: string;
+  createdAt: string;
+}
+
+export interface CourseSectionItem {
+  id: number;
+  moduleId: number;
+  title: string;
+  additionalContent?: string | null;
+  orderIndex: number;
+  materials?: CourseMaterialItem[];
+  createdAt: string;
+}
+
+export interface CourseModuleItem {
+  id: number;
+  courseId: number;
+  title: string;
+  slug: string;
+  description?: string | null;
+  bannerImage?: string | null;
+  orderIndex: number;
+  sections?: CourseSectionItem[];
+  createdAt: string;
+}
+
+export interface CourseCatalogItem {
+  id: number;
+  name: string;
+  slug: string;
+  bannerImage?: string | null;
+  type: "free" | "paid";
+  price: number;
+  currency: string;
+  theme: string;
+  description?: string | null;
+  generalObjective?: string | null;
+  learningOutcomes: string[];
+  orderIndex: number;
+  isActive: boolean;
+  moduleCount?: number;
+  sectionCount?: number;
+  materialCount?: number;
+  modules?: CourseModuleItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCoursePayload {
+  name: string;
+  theme: string;
+  type?: "free" | "paid";
+  price?: number;
+  currency?: string;
+  description?: string;
+  generalObjective?: string;
+  learningOutcomes?: string[];
+  orderIndex?: number;
+  bannerFile?: File;
+}
+
+export interface UpdateCoursePayload {
+  name?: string;
+  theme?: string;
+  type?: "free" | "paid";
+  price?: number;
+  currency?: string;
+  description?: string;
+  generalObjective?: string;
+  learningOutcomes?: string[];
+  orderIndex?: number;
+  bannerFile?: File;
+  isActive?: boolean;
+}
+
+export interface CreateModulePayload {
+  title: string;
+  description?: string;
+  bannerFile?: File;
+  orderIndex?: number;
+}
+
+export interface CreateSectionPayload {
+  title: string;
+  additionalContent?: string;
+  orderIndex?: number;
+}
+
 export interface ResourceSaleRecord {
   id: number;
   telegramId?: string;
@@ -206,6 +302,48 @@ export interface DonationRecord {
   verifiedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ModuleProgressItem {
+  id: number;
+  title: string;
+  description?: string | null;
+  orderIndex: number;
+  isCompleted: boolean;
+  isUnlocked: boolean;
+  isCurrent: boolean;
+  sectionsCount: number;
+  materialsCount: number;
+}
+
+export interface CourseEnrollmentRecord {
+  id: number;
+  telegramId: string;
+  clientName: string;
+  clientUsername?: string | null;
+  clientPhone?: string | null;
+  courseId: number;
+  courseName: string;
+  courseType: "free" | "paid";
+  amount: number;
+  currency: string;
+  paymentStatus: "free" | "pending_verification" | "confirmed" | "rejected";
+  paymentMethod?: string | null;
+  paymentReference?: string | null;
+  adminNotes?: string | null;
+  verifiedAt?: string | null;
+  status: "not_started" | "in_progress" | "completed";
+  currentModuleId?: number | null;
+  currentModuleTitle?: string;
+  completedModuleIds: number[];
+  completedCount: number;
+  totalModules: number;
+  progressPercent: number;
+  completedAt?: string | null;
+  lastActiveAt: string;
+  createdAt: string;
+  updatedAt: string;
+  moduleProgress?: ModuleProgressItem[];
 }
 
 

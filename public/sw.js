@@ -1,5 +1,5 @@
 // Service Worker for Purity Matters Web Console PWA
-const CACHE_NAME = "purity-matters-pwa-v4";
+const CACHE_NAME = "purity-matters-pwa-v5";
 const STATIC_ASSETS = [
   "/manifest.json",
   "/icons/icon-192x192.png",

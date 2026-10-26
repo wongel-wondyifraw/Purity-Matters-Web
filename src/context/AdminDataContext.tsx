@@ -25,6 +25,15 @@ import {
   PaymentSettingsResponse,
   ResourceOrderRecord,
   DonationRecord,
+  CourseCatalogItem,
+  CourseModuleItem,
+  CourseSectionItem,
+  CourseMaterialItem,
+  CreateCoursePayload,
+  UpdateCoursePayload,
+  CreateModulePayload,
+  CreateSectionPayload,
+  CourseEnrollmentRecord,
 } from "@/types/admin";
 import { ConsoleUser } from "@/types/auth";
 import { useToast } from "@/components/ui/toast";
@@ -64,10 +73,36 @@ import {
   verifyDonationApi,
   rejectDonationApi,
   deleteDonationApi,
+  fetchCourseCatalogApi,
+  fetchCourseDetailsApi,
+  createCourseApi,
+  updateCourseApi,
+  deleteCourseApi,
+  createCourseModuleApi,
+  updateCourseModuleApi,
+  deleteCourseModuleApi,
+  createCourseSectionApi,
+  updateCourseSectionApi,
+  deleteCourseSectionApi,
+  uploadSectionMaterialApi,
+  deleteCourseMaterialApi,
+  fetchCourseEnrollmentsApi,
+  verifyCourseEnrollmentPaymentApi,
+  rejectCourseEnrollmentPaymentApi,
+  deleteCourseEnrollmentApi,
   NewClientPayload,
 } from "@/services/adminApi";
 
-export type { NewResourcePayload, NewCounselingPayload, ConsoleUser, NewClientPayload };
+export type {
+  NewResourcePayload,
+  NewCounselingPayload,
+  ConsoleUser,
+  NewClientPayload,
+  CreateCoursePayload,
+  UpdateCoursePayload,
+  CreateModulePayload,
+  CreateSectionPayload,
+};
 
 export interface AdminDataContextType {
   // Live Entities
@@ -176,6 +211,28 @@ export interface AdminDataContextType {
   verifyDonation: (id: number, adminNotes?: string) => Promise<boolean>;
   rejectDonation: (id: number, reason?: string) => Promise<boolean>;
   deleteDonation: (id: number) => Promise<boolean>;
+  courseCatalog: CourseCatalogItem[];
+  isCourseCatalogLoading: boolean;
+  courseFilter: string;
+  setCourseFilter: (filter: string) => void;
+  courseEnrollments: CourseEnrollmentRecord[];
+  isCourseEnrollmentsLoading: boolean;
+  courseEnrollmentFilter: { courseId?: number; paymentStatus?: string; status?: string; search?: string };
+  setCourseEnrollmentFilter: React.Dispatch<React.SetStateAction<{ courseId?: number; paymentStatus?: string; status?: string; search?: string }>>;
+  verifyCourseEnrollment: (id: number, adminNotes?: string) => Promise<boolean>;
+  rejectCourseEnrollment: (id: number, reason?: string) => Promise<boolean>;
+  deleteCourseEnrollment: (id: number) => Promise<boolean>;
+  addCourse: (payload: CreateCoursePayload) => Promise<boolean>;
+  updateCourse: (id: number, payload: UpdateCoursePayload) => Promise<boolean>;
+  deleteCourse: (id: number) => Promise<boolean>;
+  addCourseModule: (courseId: number, payload: CreateModulePayload) => Promise<boolean>;
+  updateCourseModule: (courseId: number, moduleId: number, payload: Partial<CreateModulePayload>) => Promise<boolean>;
+  deleteCourseModule: (courseId: number, moduleId: number) => Promise<boolean>;
+  addCourseSection: (courseId: number, moduleId: number, payload: CreateSectionPayload) => Promise<boolean>;
+  updateCourseSection: (sectionId: number, payload: Partial<CreateSectionPayload>) => Promise<boolean>;
+  deleteCourseSection: (sectionId: number) => Promise<boolean>;
+  uploadCourseMaterial: (courseId: number, moduleId: number, sectionId: number, file: File, title?: string) => Promise<boolean>;
+  deleteCourseMaterial: (materialId: number) => Promise<boolean>;
   exportClientsCsv: () => void;
 }
 
@@ -302,6 +359,32 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     refetchIntervalInBackground: false,
   });
 
+  const courseCatalogQuery = useQuery<CourseCatalogItem[]>({
+    queryKey: ["admin", "course-catalog"],
+    queryFn: () => fetchCourseCatalogApi(),
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false,
+  });
+
+  const [courseFilter, setCourseFilter] = useState<string>("all");
+
+  const [courseEnrollmentFilter, setCourseEnrollmentFilter] = useState<{
+    courseId?: number;
+    paymentStatus?: string;
+    status?: string;
+    search?: string;
+  }>({
+    paymentStatus: "all",
+    status: "all",
+  });
+
+  const courseEnrollmentsQuery = useQuery<CourseEnrollmentRecord[]>({
+    queryKey: ["admin", "course-enrollments", courseEnrollmentFilter],
+    queryFn: () => fetchCourseEnrollmentsApi(courseEnrollmentFilter),
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false,
+  });
+
   const isClientsLoading = clientsQuery.isLoading;
   const isCounselingLoading = counselingQuery.isLoading;
   const isInnerHealingLoading = innerHealingQuery.isLoading;
@@ -312,6 +395,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const isPaymentSettingsLoading = paymentSettingsQuery.isLoading;
   const isResourceOrdersLoading = resourceOrdersQuery.isLoading;
   const isDonationsLoading = donationsQuery.isLoading;
+  const isCourseCatalogLoading = courseCatalogQuery.isLoading;
+  const isCourseEnrollmentsLoading = courseEnrollmentsQuery.isLoading;
 
   const isLoading =
     isClientsLoading ||
@@ -320,7 +405,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     isOrdersLoading ||
     isQuestionsLoading ||
     isResourceOrdersLoading ||
-    isDonationsLoading;
+    isDonationsLoading ||
+    isCourseCatalogLoading;
 
   const clients = useMemo(() => clientsQuery.data || [], [clientsQuery.data]);
   const counselingRequests = useMemo(() => counselingQuery.data || [], [counselingQuery.data]);
@@ -334,6 +420,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const paymentSettings = paymentSettingsQuery.data ?? null;
   const resourceOrders = useMemo(() => resourceOrdersQuery.data || [], [resourceOrdersQuery.data]);
   const donations = useMemo(() => donationsQuery.data || [], [donationsQuery.data]);
+  const courseCatalog = useMemo(() => courseCatalogQuery.data || [], [courseCatalogQuery.data]);
+  const courseEnrollments = useMemo(() => courseEnrollmentsQuery.data || [], [courseEnrollmentsQuery.data]);
 
   // =================== MUTATIONS ===================
 
@@ -1172,6 +1260,329 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const coursesCount = courseProgressList.length;
   const resourceCount = resourceSales.length;
 
+  // Course Management Callbacks
+  const addCourse = useCallback(
+    async (payload: CreateCoursePayload) => {
+      try {
+        await createCourseApi(payload);
+        await queryClient.invalidateQueries({ queryKey: ["admin", "course-catalog"] });
+        triggerHaptic();
+        toast({
+          title: "Course Created",
+          description: `"${payload.name}" has been published.`,
+        });
+        return true;
+      } catch (err: any) {
+        toast({
+          title: "Error Creating Course",
+          description: err.message || "Failed to create course.",
+          type: "error",
+        });
+        return false;
+      }
+    },
+    [queryClient, toast]
+  );
+
+  const updateCourse = useCallback(
+    async (id: number, payload: UpdateCoursePayload) => {
+      try {
+        await updateCourseApi(id, payload);
+        await queryClient.invalidateQueries({ queryKey: ["admin", "course-catalog"] });
+        triggerHaptic();
+        toast({
+          title: "Course Updated",
+          description: "Changes saved successfully.",
+        });
+        return true;
+      } catch (err: any) {
+        toast({
+          title: "Update Error",
+          description: err.message || "Failed to update course.",
+          type: "error",
+        });
+        return false;
+      }
+    },
+    [queryClient, toast]
+  );
+
+  const deleteCourse = useCallback(
+    async (id: number) => {
+      try {
+        await deleteCourseApi(id);
+        await queryClient.invalidateQueries({ queryKey: ["admin", "course-catalog"] });
+        triggerHaptic();
+        toast({
+          title: "Course Deleted",
+          description: `Course #${id} removed.`,
+        });
+        return true;
+      } catch (err: any) {
+        toast({
+          title: "Delete Error",
+          description: err.message || "Failed to delete course.",
+          type: "error",
+        });
+        return false;
+      }
+    },
+    [queryClient, toast]
+  );
+
+  const addCourseModule = useCallback(
+    async (courseId: number, payload: CreateModulePayload) => {
+      try {
+        await createCourseModuleApi(courseId, payload);
+        await queryClient.invalidateQueries({ queryKey: ["admin", "course-catalog"] });
+        triggerHaptic();
+        toast({
+          title: "Module Added",
+          description: `"${payload.title}" created.`,
+        });
+        return true;
+      } catch (err: any) {
+        toast({
+          title: "Error Adding Module",
+          description: err.message || "Failed to add module.",
+          type: "error",
+        });
+        return false;
+      }
+    },
+    [queryClient, toast]
+  );
+
+  const updateCourseModule = useCallback(
+    async (courseId: number, moduleId: number, payload: Partial<CreateModulePayload>) => {
+      try {
+        await updateCourseModuleApi(courseId, moduleId, payload);
+        await queryClient.invalidateQueries({ queryKey: ["admin", "course-catalog"] });
+        triggerHaptic();
+        toast({
+          title: "Module Updated",
+          description: "Module updated successfully.",
+        });
+        return true;
+      } catch (err: any) {
+        toast({
+          title: "Update Error",
+          description: err.message || "Failed to update module.",
+          type: "error",
+        });
+        return false;
+      }
+    },
+    [queryClient, toast]
+  );
+
+  const deleteCourseModule = useCallback(
+    async (courseId: number, moduleId: number) => {
+      try {
+        await deleteCourseModuleApi(courseId, moduleId);
+        await queryClient.invalidateQueries({ queryKey: ["admin", "course-catalog"] });
+        triggerHaptic();
+        toast({
+          title: "Module Deleted",
+          description: "Module removed.",
+        });
+        return true;
+      } catch (err: any) {
+        toast({
+          title: "Delete Error",
+          description: err.message || "Failed to delete module.",
+          type: "error",
+        });
+        return false;
+      }
+    },
+    [queryClient, toast]
+  );
+
+  const addCourseSection = useCallback(
+    async (courseId: number, moduleId: number, payload: CreateSectionPayload) => {
+      try {
+        await createCourseSectionApi(courseId, moduleId, payload);
+        await queryClient.invalidateQueries({ queryKey: ["admin", "course-catalog"] });
+        triggerHaptic();
+        toast({
+          title: "Section Created",
+          description: `"${payload.title}" created.`,
+        });
+        return true;
+      } catch (err: any) {
+        toast({
+          title: "Error Adding Section",
+          description: err.message || "Failed to create section.",
+          type: "error",
+        });
+        return false;
+      }
+    },
+    [queryClient, toast]
+  );
+
+  const updateCourseSection = useCallback(
+    async (sectionId: number, payload: Partial<CreateSectionPayload>) => {
+      try {
+        await updateCourseSectionApi(sectionId, payload);
+        await queryClient.invalidateQueries({ queryKey: ["admin", "course-catalog"] });
+        triggerHaptic();
+        toast({
+          title: "Section Updated",
+          description: "Section updated.",
+        });
+        return true;
+      } catch (err: any) {
+        toast({
+          title: "Update Error",
+          description: err.message || "Failed to update section.",
+          type: "error",
+        });
+        return false;
+      }
+    },
+    [queryClient, toast]
+  );
+
+  const deleteCourseSection = useCallback(
+    async (sectionId: number) => {
+      try {
+        await deleteCourseSectionApi(sectionId);
+        await queryClient.invalidateQueries({ queryKey: ["admin", "course-catalog"] });
+        triggerHaptic();
+        toast({
+          title: "Section Deleted",
+          description: "Section removed.",
+        });
+        return true;
+      } catch (err: any) {
+        toast({
+          title: "Delete Error",
+          description: err.message || "Failed to delete section.",
+          type: "error",
+        });
+        return false;
+      }
+    },
+    [queryClient, toast]
+  );
+
+  const uploadCourseMaterial = useCallback(
+    async (courseId: number, moduleId: number, sectionId: number, file: File, title?: string) => {
+      try {
+        await uploadSectionMaterialApi(courseId, moduleId, sectionId, file, title);
+        await queryClient.invalidateQueries({ queryKey: ["admin", "course-catalog"] });
+        triggerHaptic();
+        toast({
+          title: "Material Uploaded",
+          description: `"${file.name}" attached successfully.`,
+        });
+        return true;
+      } catch (err: any) {
+        toast({
+          title: "Upload Error",
+          description: err.message || "Failed to upload file.",
+          type: "error",
+        });
+        return false;
+      }
+    },
+    [queryClient, toast]
+  );
+
+  const deleteCourseMaterial = useCallback(
+    async (materialId: number) => {
+      try {
+        await deleteCourseMaterialApi(materialId);
+        await queryClient.invalidateQueries({ queryKey: ["admin", "course-catalog"] });
+        triggerHaptic();
+        toast({
+          title: "Material Removed",
+          description: "File deleted successfully.",
+        });
+        return true;
+      } catch (err: any) {
+        toast({
+          title: "Delete Error",
+          description: err.message || "Failed to delete material.",
+          type: "error",
+        });
+        return false;
+      }
+    },
+    [queryClient, toast]
+  );
+
+  const verifyCourseEnrollment = useCallback(
+    async (id: number, adminNotes?: string) => {
+      try {
+        const res = await verifyCourseEnrollmentPaymentApi(id, adminNotes);
+        await queryClient.invalidateQueries({ queryKey: ["admin", "course-enrollments"] });
+        triggerHaptic();
+        toast({
+          title: "Payment Approved",
+          description: `Access granted for ${res.enrollment.clientName} in ${res.enrollment.courseName}.`,
+        });
+        return true;
+      } catch (err: any) {
+        toast({
+          title: "Verification Error",
+          description: err.message || "Failed to verify course payment.",
+          type: "error",
+        });
+        return false;
+      }
+    },
+    [queryClient, toast]
+  );
+
+  const rejectCourseEnrollment = useCallback(
+    async (id: number, reason?: string) => {
+      try {
+        await rejectCourseEnrollmentPaymentApi(id, reason);
+        await queryClient.invalidateQueries({ queryKey: ["admin", "course-enrollments"] });
+        triggerHaptic();
+        toast({
+          title: "Payment Rejected",
+          description: `Enrollment #${id} payment marked as rejected.`,
+        });
+        return true;
+      } catch (err: any) {
+        toast({
+          title: "Rejection Error",
+          description: err.message || "Failed to reject course payment.",
+          type: "error",
+        });
+        return false;
+      }
+    },
+    [queryClient, toast]
+  );
+
+  const deleteCourseEnrollment = useCallback(
+    async (id: number) => {
+      try {
+        await deleteCourseEnrollmentApi(id);
+        await queryClient.invalidateQueries({ queryKey: ["admin", "course-enrollments"] });
+        triggerHaptic();
+        toast({
+          title: "Enrollment Deleted",
+          description: `Enrollment record #${id} removed successfully.`,
+        });
+        return true;
+      } catch (err: any) {
+        toast({
+          title: "Delete Error",
+          description: err.message || "Failed to delete enrollment.",
+          type: "error",
+        });
+        return false;
+      }
+    },
+    [queryClient, toast]
+  );
+
   // =================== FULLY MEMOIZED CONTEXT VALUE ===================
 
   const contextValue = useMemo<AdminDataContextType>(
@@ -1180,6 +1591,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       counselingRequests,
       innerHealingRequests,
       courseProgressList,
+      courseCatalog,
       resourceSales,
       resourceCatalog,
       physicalBookOrders,
@@ -1195,6 +1607,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       isCounselingLoading,
       isInnerHealingLoading,
       isCoursesLoading,
+      isCourseCatalogLoading,
       isCatalogLoading,
       isOrdersLoading,
       isQuestionsLoading,
@@ -1207,6 +1620,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       setCounselingFilter,
       donationsFilter,
       setDonationsFilter,
+      courseFilter,
+      setCourseFilter,
       copiedId,
       copyToClipboard,
       totalClients,
@@ -1251,6 +1666,24 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       verifyDonation,
       rejectDonation,
       deleteDonation,
+      courseEnrollments,
+      isCourseEnrollmentsLoading,
+      courseEnrollmentFilter,
+      setCourseEnrollmentFilter,
+      verifyCourseEnrollment,
+      rejectCourseEnrollment,
+      deleteCourseEnrollment,
+      addCourse,
+      updateCourse,
+      deleteCourse,
+      addCourseModule,
+      updateCourseModule,
+      deleteCourseModule,
+      addCourseSection,
+      updateCourseSection,
+      deleteCourseSection,
+      uploadCourseMaterial,
+      deleteCourseMaterial,
       exportClientsCsv,
     }),
     [
@@ -1258,6 +1691,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       counselingRequests,
       innerHealingRequests,
       courseProgressList,
+      courseCatalog,
+      courseEnrollments,
       resourceSales,
       resourceCatalog,
       physicalBookOrders,
@@ -1273,6 +1708,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       isCounselingLoading,
       isInnerHealingLoading,
       isCoursesLoading,
+      isCourseCatalogLoading,
+      isCourseEnrollmentsLoading,
       isCatalogLoading,
       isOrdersLoading,
       isQuestionsLoading,
@@ -1282,6 +1719,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       clientFilter,
       counselingFilter,
       donationsFilter,
+      courseFilter,
+      courseEnrollmentFilter,
       copiedId,
       copyToClipboard,
       totalClients,
@@ -1322,6 +1761,17 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       verifyDonation,
       rejectDonation,
       deleteDonation,
+      addCourse,
+      updateCourse,
+      deleteCourse,
+      addCourseModule,
+      updateCourseModule,
+      deleteCourseModule,
+      addCourseSection,
+      updateCourseSection,
+      deleteCourseSection,
+      uploadCourseMaterial,
+      deleteCourseMaterial,
       exportClientsCsv,
     ]
   );

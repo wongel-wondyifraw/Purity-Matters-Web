@@ -12,6 +12,15 @@ import {
   PaymentSettingsResponse,
   ResourceOrderRecord,
   DonationRecord,
+  CourseCatalogItem,
+  CourseModuleItem,
+  CourseSectionItem,
+  CourseMaterialItem,
+  CreateCoursePayload,
+  UpdateCoursePayload,
+  CreateModulePayload,
+  CreateSectionPayload,
+  CourseEnrollmentRecord,
 } from "@/types/admin";
 import { ConsoleUser } from "@/types/auth";
 
@@ -798,5 +807,453 @@ export async function deleteDonationApi(id: number): Promise<boolean> {
   }
   return true;
 }
+
+// ==========================================
+// COURSES MANAGEMENT API
+// ==========================================
+
+export async function fetchCourseCatalogApi(options?: {
+  type?: string;
+  theme?: string;
+  search?: string;
+}): Promise<CourseCatalogItem[]> {
+  const params = new URLSearchParams();
+  if (options?.type && options.type !== "all") params.append("type", options.type);
+  if (options?.theme && options.theme !== "all") params.append("theme", options.theme);
+  if (options?.search) params.append("search", options.search);
+
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const res = await adminFetch(`/api/admin/courses/catalog${qs}`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  if (!Array.isArray(data)) return [];
+  return data.map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    bannerImage: c.bannerImage || null,
+    type: c.type || "free",
+    price: Number(c.price) || 0,
+    currency: c.currency || "ETB",
+    theme: c.theme || "General",
+    description: c.description || null,
+    generalObjective: c.generalObjective || null,
+    learningOutcomes: Array.isArray(c.learningOutcomes) ? c.learningOutcomes : [],
+    orderIndex: Number(c.orderIndex) || 0,
+    isActive: c.isActive !== false,
+    moduleCount: c.moduleCount || 0,
+    sectionCount: c.sectionCount || 0,
+    materialCount: c.materialCount || 0,
+    modules: Array.isArray(c.modules) ? c.modules : [],
+    createdAt: formatDateTime(c.createdAt),
+    updatedAt: formatDateTime(c.updatedAt || c.createdAt),
+  }));
+}
+
+export async function fetchCourseDetailsApi(id: number): Promise<CourseCatalogItem | null> {
+  const res = await adminFetch(`/api/admin/courses/catalog/${id}`);
+  if (!res.ok) return null;
+  const c = await res.json();
+  if (!c || !c.id) return null;
+
+  return {
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    bannerImage: c.bannerImage || null,
+    type: c.type || "free",
+    price: Number(c.price) || 0,
+    currency: c.currency || "ETB",
+    theme: c.theme || "General",
+    description: c.description || null,
+    generalObjective: c.generalObjective || null,
+    learningOutcomes: Array.isArray(c.learningOutcomes) ? c.learningOutcomes : [],
+    orderIndex: Number(c.orderIndex) || 0,
+    isActive: c.isActive !== false,
+    modules: (c.modules || []).map((m: any) => ({
+      id: m.id,
+      courseId: m.courseId,
+      title: m.title,
+      slug: m.slug,
+      description: m.description || null,
+      bannerImage: m.bannerImage || null,
+      orderIndex: Number(m.orderIndex) || 0,
+      createdAt: formatDateTime(m.createdAt),
+      sections: (m.sections || []).map((s: any) => ({
+        id: s.id,
+        moduleId: s.moduleId,
+        title: s.title,
+        additionalContent: s.additionalContent || null,
+        orderIndex: Number(s.orderIndex) || 0,
+        createdAt: formatDateTime(s.createdAt),
+        materials: (s.materials || []).map((mat: any) => ({
+          id: mat.id,
+          sectionId: mat.sectionId,
+          title: mat.title,
+          fileName: mat.fileName,
+          filePath: mat.filePath,
+          fileSizeBytes: mat.fileSizeBytes ? Number(mat.fileSizeBytes) : null,
+          fileMimeType: mat.fileMimeType || null,
+          fileType: mat.fileType || "document",
+          createdAt: formatDateTime(mat.createdAt),
+        })),
+      })),
+    })),
+    createdAt: formatDateTime(c.createdAt),
+    updatedAt: formatDateTime(c.updatedAt || c.createdAt),
+  };
+}
+
+export async function createCourseApi(payload: CreateCoursePayload): Promise<CourseCatalogItem> {
+  const formData = new FormData();
+  formData.append("name", payload.name);
+  formData.append("theme", payload.theme);
+  formData.append("type", payload.type || "free");
+  formData.append("price", String(payload.price || 0));
+  formData.append("currency", payload.currency || "ETB");
+  if (payload.description) formData.append("description", payload.description);
+  if (payload.generalObjective) formData.append("generalObjective", payload.generalObjective);
+  if (payload.learningOutcomes) {
+    formData.append("learningOutcomes", JSON.stringify(payload.learningOutcomes));
+  }
+  if (payload.orderIndex !== undefined) {
+    formData.append("orderIndex", String(payload.orderIndex));
+  }
+  if (payload.bannerFile) {
+    formData.append("banner", payload.bannerFile);
+  }
+
+  const res = await adminFetch("/api/admin/courses/catalog", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    let msg = "Failed to create course";
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function updateCourseApi(
+  id: number,
+  payload: UpdateCoursePayload
+): Promise<CourseCatalogItem> {
+  const formData = new FormData();
+  if (payload.name) formData.append("name", payload.name);
+  if (payload.theme) formData.append("theme", payload.theme);
+  if (payload.type) formData.append("type", payload.type);
+  if (payload.price !== undefined) formData.append("price", String(payload.price));
+  if (payload.currency) formData.append("currency", payload.currency);
+  if (payload.description !== undefined) formData.append("description", payload.description || "");
+  if (payload.generalObjective !== undefined) formData.append("generalObjective", payload.generalObjective || "");
+  if (payload.learningOutcomes) {
+    formData.append("learningOutcomes", JSON.stringify(payload.learningOutcomes));
+  }
+  if (payload.orderIndex !== undefined) {
+    formData.append("orderIndex", String(payload.orderIndex));
+  }
+  if (payload.isActive !== undefined) {
+    formData.append("isActive", String(payload.isActive));
+  }
+  if (payload.bannerFile) {
+    formData.append("banner", payload.bannerFile);
+  }
+
+  const res = await adminFetch(`/api/admin/courses/catalog/${id}`, {
+    method: "PATCH",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    let msg = `Failed to update course #${id}`;
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function deleteCourseApi(id: number): Promise<boolean> {
+  const res = await adminFetch(`/api/admin/courses/catalog/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok && res.status !== 404) {
+    let msg = `Failed to delete course #${id}`;
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return true;
+}
+
+export async function createCourseModuleApi(
+  courseId: number,
+  payload: CreateModulePayload
+): Promise<CourseModuleItem> {
+  const formData = new FormData();
+  formData.append("title", payload.title);
+  if (payload.description) formData.append("description", payload.description);
+  if (payload.orderIndex !== undefined) formData.append("orderIndex", String(payload.orderIndex));
+  if (payload.bannerFile) formData.append("banner", payload.bannerFile);
+
+  const res = await adminFetch(`/api/admin/courses/catalog/${courseId}/modules`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    let msg = "Failed to create course module";
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function updateCourseModuleApi(
+  courseId: number,
+  moduleId: number,
+  payload: Partial<CreateModulePayload>
+): Promise<CourseModuleItem> {
+  const formData = new FormData();
+  if (payload.title) formData.append("title", payload.title);
+  if (payload.description !== undefined) formData.append("description", payload.description || "");
+  if (payload.orderIndex !== undefined) formData.append("orderIndex", String(payload.orderIndex));
+  if (payload.bannerFile) formData.append("banner", payload.bannerFile);
+
+  const res = await adminFetch(`/api/admin/courses/catalog/${courseId}/modules/${moduleId}`, {
+    method: "PATCH",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    let msg = `Failed to update module #${moduleId}`;
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function deleteCourseModuleApi(
+  courseId: number,
+  moduleId: number
+): Promise<boolean> {
+  const res = await adminFetch(`/api/admin/courses/catalog/${courseId}/modules/${moduleId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok && res.status !== 404) {
+    let msg = `Failed to delete module #${moduleId}`;
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return true;
+}
+
+export async function createCourseSectionApi(
+  courseId: number,
+  moduleId: number,
+  payload: CreateSectionPayload
+): Promise<CourseSectionItem> {
+  const res = await adminFetch(
+    `/api/admin/courses/catalog/${courseId}/modules/${moduleId}/sections`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }
+  );
+  if (!res.ok) {
+    let msg = "Failed to create section";
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function updateCourseSectionApi(
+  sectionId: number,
+  payload: Partial<CreateSectionPayload>
+): Promise<CourseSectionItem> {
+  const res = await adminFetch(`/api/admin/courses/catalog/sections/${sectionId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    let msg = `Failed to update section #${sectionId}`;
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function deleteCourseSectionApi(sectionId: number): Promise<boolean> {
+  const res = await adminFetch(`/api/admin/courses/catalog/sections/${sectionId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok && res.status !== 404) {
+    let msg = `Failed to delete section #${sectionId}`;
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return true;
+}
+
+export async function uploadSectionMaterialApi(
+  courseId: number,
+  moduleId: number,
+  sectionId: number,
+  file: File,
+  title?: string
+): Promise<CourseMaterialItem> {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (title) formData.append("title", title);
+
+  const res = await adminFetch(
+    `/api/admin/courses/catalog/${courseId}/modules/${moduleId}/sections/${sectionId}/materials`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+
+  if (!res.ok) {
+    let msg = "Failed to upload learning material";
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function deleteCourseMaterialApi(materialId: number): Promise<boolean> {
+  const res = await adminFetch(`/api/admin/courses/catalog/materials/${materialId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok && res.status !== 404) {
+    let msg = `Failed to delete material #${materialId}`;
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return true;
+}
+
+// ==========================================
+// COURSE ENROLMENTS & PROGRESS API
+// ==========================================
+
+export async function fetchCourseEnrollmentsApi(params?: {
+  courseId?: number;
+  paymentStatus?: string;
+  status?: string;
+  search?: string;
+}): Promise<CourseEnrollmentRecord[]> {
+  const query = new URLSearchParams();
+  if (params?.courseId) query.set("courseId", String(params.courseId));
+  if (params?.paymentStatus && params.paymentStatus !== "all") query.set("paymentStatus", params.paymentStatus);
+  if (params?.status && params.status !== "all") query.set("status", params.status);
+  if (params?.search?.trim()) query.set("search", params.search.trim());
+
+  const qs = query.toString() ? `?${query.toString()}` : "";
+  const res = await adminFetch(`/api/admin/courses/enrollments${qs}`);
+  if (!res.ok) {
+    throw new Error("Failed to load course enrollments");
+  }
+  return res.json();
+}
+
+export async function fetchCourseEnrollmentDetailsApi(id: number): Promise<CourseEnrollmentRecord> {
+  const res = await adminFetch(`/api/admin/courses/enrollments/${id}`);
+  if (!res.ok) {
+    throw new Error(`Failed to load details for enrollment #${id}`);
+  }
+  return res.json();
+}
+
+export async function verifyCourseEnrollmentPaymentApi(
+  id: number,
+  adminNotes?: string,
+): Promise<{ success: boolean; enrollment: CourseEnrollmentRecord }> {
+  const res = await adminFetch(`/api/admin/courses/enrollments/${id}/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ adminNotes }),
+  });
+  if (!res.ok) {
+    let msg = "Failed to verify payment";
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function rejectCourseEnrollmentPaymentApi(
+  id: number,
+  reason?: string,
+): Promise<{ success: boolean; enrollment: CourseEnrollmentRecord }> {
+  const res = await adminFetch(`/api/admin/courses/enrollments/${id}/reject`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+  });
+  if (!res.ok) {
+    let msg = "Failed to reject payment";
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function deleteCourseEnrollmentApi(id: number): Promise<boolean> {
+  const res = await adminFetch(`/api/admin/courses/enrollments/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok && res.status !== 404) {
+    let msg = `Failed to delete enrollment #${id}`;
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return true;
+}
+
 
 
