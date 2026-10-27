@@ -1,5 +1,5 @@
 // Service Worker for Purity Matters Web Console PWA
-const CACHE_NAME = "purity-matters-pwa-v8";
+const CACHE_NAME = "purity-matters-pwa-v9";
 const STATIC_ASSETS = [
   "/manifest.json",
   "/manifest.json?v=3",
@@ -19,31 +19,33 @@ const STATIC_ASSETS = [
   "/favicon.png?v=3"
 ];
 
-// Install Event - Precache only immutable static icon assets
+// Install Event - Precache static icon assets and immediately activate
 self.addEventListener("install", (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS);
     })
   );
-  // Do not call self.skipWaiting() automatically to avoid breaking active sessions.
-  // Instead, wait for clients to coordinate or reload cleanly.
 });
 
-// Activate Event - Purge previous caches safely
+// Activate Event - Purge previous caches immediately and claim clients
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
-    })
+    caches
+      .keys()
+      .then((keys) => {
+        return Promise.all(
+          keys.map((key) => {
+            if (key !== CACHE_NAME) {
+              console.log("[SW] Deleting obsolete cache:", key);
+              return caches.delete(key);
+            }
+          })
+        );
+      })
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 // Listen for explicit update activation messages from PwaContext / client UI
@@ -84,7 +86,6 @@ self.addEventListener("fetch", (event) => {
         .catch(async () => {
           const cached = await caches.match(event.request);
           if (cached) return cached;
-          // Gracefully return a fallback or 503 instead of an unhandled rejection
           return new Response("Asset temporarily unavailable", {
             status: 503,
             statusText: "Service Unavailable",
@@ -95,16 +96,16 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static icon and manifest assets: cache-first with query-parameter flexibility
+  // Static icon and manifest assets: Network-first with cache fallback
+  // This guarantees updated icons on the server are fetched immediately without being stuck in cache-first
   if (
     url.pathname.startsWith("/icons") ||
     url.pathname.startsWith("/favicon") ||
     url.pathname === "/manifest.json"
   ) {
     event.respondWith(
-      caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
-        if (cachedResponse) return cachedResponse;
-        return fetch(event.request).then((networkResponse) => {
+      fetch(event.request)
+        .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
@@ -112,8 +113,12 @@ self.addEventListener("fetch", (event) => {
             });
           }
           return networkResponse;
-        });
-      })
+        })
+        .catch(async () => {
+          const cached = await caches.match(event.request);
+          if (cached) return cached;
+          return caches.match(event.request, { ignoreSearch: true });
+        })
     );
   }
 });

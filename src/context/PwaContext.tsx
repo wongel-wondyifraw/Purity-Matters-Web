@@ -72,6 +72,11 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
         navigator.serviceWorker
           .register("/sw.js")
           .then((reg) => {
+            // If a worker is waiting, immediately activate it
+            if (reg.waiting) {
+              reg.waiting.postMessage({ type: "SKIP_WAITING" });
+            }
+
             // Check for updates when worker installs
             reg.onupdatefound = () => {
               const installingWorker = reg.installing;
@@ -81,10 +86,7 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
                     installingWorker.state === "installed" &&
                     navigator.serviceWorker.controller
                   ) {
-                    toast.info(
-                      "PWA Updated",
-                      "A new version of the app is available. Reload when ready to update."
-                    );
+                    installingWorker.postMessage({ type: "SKIP_WAITING" });
                   }
                 };
               }
