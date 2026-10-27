@@ -82,7 +82,7 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
           className="flex items-center gap-2.5 shrink-0 select-none cursor-pointer"
         >
           <img
-            src="/icons/icon.svg"
+            src="/icons/icon.svg?v=3"
             alt="Purity Matters Logo"
             className="w-7 h-7 rounded-lg object-contain shrink-0"
           />

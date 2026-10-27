@@ -3,7 +3,7 @@
   "short_name": "Purity Matters",
   "description": "Administrative web console for Purity Matters Ministry Telegram Bot and Community Management",
   "start_url": "/",
-  "id": "/?v=2",
+  "id": "/?v=3",
   "display": "standalone",
   "background_color": "#FFFFFF",
   "theme_color": "#202328",
@@ -12,28 +12,28 @@
   "categories": ["lifestyle", "productivity"],
   "icons": [
     {
-      "src": "/icons/icon-192x192.png?v=2",
+      "src": "/icons/icon.svg?v=3",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png?v=3",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512x512.png?v=2",
+      "src": "/icons/icon-512x512.png?v=3",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-maskable-512x512.png?v=2",
+      "src": "/icons/icon-maskable-512x512.png?v=3",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "/icons/icon.svg?v=2",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
     }
   ]
 }

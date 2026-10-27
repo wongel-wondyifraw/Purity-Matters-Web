@@ -61,7 +61,7 @@ export default function LoginPage() {
               className="flex items-center gap-2.5 mb-2 cursor-pointer"
             >
               <img
-                src="/icons/icon.svg"
+                src="/icons/icon.svg?v=3"
                 alt="Purity Matters Logo"
                 className="w-8 h-8 rounded-xl object-contain shadow-xs shrink-0"
               />

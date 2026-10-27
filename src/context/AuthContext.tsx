@@ -45,6 +45,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Decode JWT payload without verification (for client-side claim extraction only)
+  const decodeTokenPayload = useCallback((jwt: string): { sub?: number; email?: string; role?: string } | null => {
+    try {
+      const parts = jwt.split(".");
+      if (parts.length !== 3) return null;
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+      return payload;
+    } catch {
+      return null;
+    }
+  }, []);
+
   // Check and restore session on mount with timeout and validated isolation
   useEffect(() => {
     let isMounted = true;
@@ -63,10 +75,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        // Decode the token to extract identity claims for cross-validation
+        const tokenPayload = decodeTokenPayload(storedToken);
+        const tokenEmail = tokenPayload?.email?.toLowerCase().trim() || null;
+        const tokenUserId = tokenPayload?.sub || null;
+
+        if (!tokenEmail || !tokenUserId) {
+          // Token is malformed — clear session
+          console.warn("[Auth] Stored token has no email/sub claim, clearing session");
+          if (typeof window !== "undefined") {
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(USER_CACHE_KEY);
+          }
+          if (isMounted) {
+            setToken(null);
+            setUser(null);
+            setIsLoading(false);
+          }
+          return;
+        }
+
         let parsedUser: ConsoleUser | null = null;
         if (cachedUserJson) {
           try {
             parsedUser = JSON.parse(cachedUserJson);
+            // Validate cached user matches the token's identity
+            if (parsedUser && parsedUser.email?.toLowerCase().trim() !== tokenEmail) {
+              console.warn(
+                `[Auth] Cached user email (${parsedUser.email}) doesn't match token email (${tokenEmail}). Discarding stale cache.`
+              );
+              parsedUser = null;
+              if (typeof window !== "undefined") {
+                localStorage.removeItem(USER_CACHE_KEY);
+              }
+            }
             if (isMounted && parsedUser) {
               setToken(storedToken);
               setUser(parsedUser);
@@ -88,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             headers: {
               Authorization: `Bearer ${storedToken}`,
               "Content-Type": "application/json",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
             },
           });
 
@@ -95,6 +138,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           if (response.ok) {
             const freshUser: ConsoleUser = await response.json();
+
+            // CRITICAL: Validate that the server returned the SAME user as the token claims
+            const serverEmail = freshUser.email?.toLowerCase().trim();
+            if (serverEmail !== tokenEmail) {
+              console.error(
+                `[Auth] IDENTITY MISMATCH: Token is for "${tokenEmail}" but /api/auth/me returned "${serverEmail}". Clearing session to prevent user switch.`
+              );
+              if (typeof window !== "undefined") {
+                localStorage.removeItem(TOKEN_KEY);
+                localStorage.removeItem(USER_CACHE_KEY);
+              }
+              setToken(null);
+              setUser(null);
+              return;
+            }
+
             setUser(freshUser);
             setToken(storedToken);
             if (typeof window !== "undefined") {
@@ -147,7 +206,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       isMounted = false;
     };
-  }, [apiUrl]);
+  }, [apiUrl, decodeTokenPayload]);
 
   // Listen for unauthorized 401/403 events from API requests to auto-logout
   useEffect(() => {

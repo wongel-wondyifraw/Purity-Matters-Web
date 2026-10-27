@@ -23,7 +23,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Purity Matters Web Console | Admin Management",
   description: "Administrative dashboard for managing Telegram bot clients, counselling requests, inner healing sessions, courses, and digital resources.",
-  manifest: "/manifest.json?v=2",
+  manifest: "/manifest.json?v=3",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -31,14 +31,14 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.png?v=2", sizes: "32x32", type: "image/png" },
-      { url: "/icons/icon-192x192.png?v=2", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512x512.png?v=2", sizes: "512x512", type: "image/png" },
-      { url: "/icons/icon.svg?v=2", type: "image/svg+xml" },
+      { url: "/icons/icon.svg?v=3", type: "image/svg+xml" },
+      { url: "/favicon.png?v=3", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192x192.png?v=3", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png?v=3", sizes: "512x512", type: "image/png" },
     ],
-    shortcut: "/favicon.ico?v=2",
+    shortcut: "/favicon.ico?v=3",
     apple: [
-      { url: "/icons/apple-touch-icon.png?v=2", sizes: "180x180", type: "image/png" },
+      { url: "/icons/apple-touch-icon.png?v=3", sizes: "180x180", type: "image/png" },
     ],
   },
 };

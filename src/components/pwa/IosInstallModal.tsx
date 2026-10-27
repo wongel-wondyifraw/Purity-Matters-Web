@@ -20,7 +20,7 @@ export function IosInstallModal() {
         <DialogHeader className="pb-3 border-b border-black/[0.06] text-center">
           <div className="w-14 h-14 rounded-2xl overflow-hidden bg-white border border-black/10 flex items-center justify-center mx-auto mb-2 shadow-xs p-1">
             <img
-              src="/icons/icon.svg"
+              src="/icons/icon.svg?v=3"
               alt="Purity Matters Logo"
               className="w-full h-full object-contain"
             />
