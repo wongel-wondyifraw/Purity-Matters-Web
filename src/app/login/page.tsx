@@ -58,9 +58,13 @@ export default function LoginPage() {
           <div id="login-brand-header" className="flex flex-col items-center text-center mb-7">
             <div
               id="login-brand-mark"
-              className="flex items-center gap-2 mb-2 cursor-pointer"
+              className="flex items-center gap-2.5 mb-2 cursor-pointer"
             >
-              <span className="w-3 h-3 rounded-full bg-[#F6CE46] shadow-xs" />
+              <img
+                src="/icons/icon.svg"
+                alt="Purity Matters Logo"
+                className="w-8 h-8 rounded-xl object-contain shadow-xs shrink-0"
+              />
               <span className="text-xl font-bold tracking-tight text-[#202328]">
                 Purity Matters
               </span>
@@ -69,7 +73,7 @@ export default function LoginPage() {
               Web Console Administration
             </p>
             <p className="text-sm text-neutral-600 mt-2 font-normal">
-              Sign in to manage counseling, journeys, and bot operations.
+              Sign in to manage counseling, courses, and bot operations.
             </p>
           </div>
 

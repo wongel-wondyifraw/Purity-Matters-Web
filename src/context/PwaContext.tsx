@@ -64,13 +64,15 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
       setIsInstallable(true);
     }
 
-    // 3. Register Service Worker
+    // 3. Register Service Worker with clean lifecycle and listener cleanup
+    let onVisibilityChange: (() => void) | null = null;
+
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
+      const registerSw = () => {
         navigator.serviceWorker
           .register("/sw.js")
           .then((reg) => {
-            // Check for updates periodically
+            // Check for updates when worker installs
             reg.onupdatefound = () => {
               const installingWorker = reg.installing;
               if (installingWorker) {
@@ -79,13 +81,17 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
                     installingWorker.state === "installed" &&
                     navigator.serviceWorker.controller
                   ) {
-                    toast.info("PWA Updated", "A new version of the app is available.");
+                    toast.info(
+                      "PWA Updated",
+                      "A new version of the app is available. Reload when ready to update."
+                    );
                   }
                 };
               }
             };
+
             // Auto-check for updates whenever the PWA is resumed or focused
-            const onVisibilityChange = () => {
+            onVisibilityChange = () => {
               if (document.visibilityState === "visible") {
                 reg.update().catch(() => {});
               }
@@ -95,7 +101,13 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
           .catch((err) => {
             console.warn("ServiceWorker registration failed:", err);
           });
-      });
+      };
+
+      if (document.readyState === "complete") {
+        registerSw();
+      } else {
+        window.addEventListener("load", registerSw, { once: true });
+      }
     }
 
     // 4. Capture beforeinstallprompt event
@@ -118,6 +130,9 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleAppInstalled);
+      if (onVisibilityChange) {
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+      }
     };
   }, [toast]);
 

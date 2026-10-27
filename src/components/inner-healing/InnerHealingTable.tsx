@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Sparkles, RefreshCw, Search, Plus } from "lucide-react";
+import { Search, Sparkles } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -29,8 +29,6 @@ export function InnerHealingTable() {
     innerHealingRequests,
     isInnerHealingLoading,
     updateInnerHealingStatus,
-    syncWithRemoteBackend,
-    isRefreshing,
   } = useAdminData();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -105,17 +103,6 @@ export function InnerHealingTable() {
               className="shrink-0 flex-1 sm:flex-none"
               triggerClassName="bg-white/80 border border-black/10 text-xs rounded-full px-3.5 py-1.5 text-[#202328] font-medium shadow-2xs h-9"
             />
-
-            {/* Action Button: + Healing */}
-            <Button
-              type="button"
-              onClick={() => syncWithRemoteBackend()}
-              disabled={isRefreshing}
-              className="bg-[#202328] hover:bg-black text-white text-xs h-9 px-4 rounded-full cursor-pointer shadow-2xs font-semibold flex items-center gap-1.5 transition-all shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5 text-[#F6CE46]" />
-              <span>Healing</span>
-            </Button>
           </div>
         </div>
       </CardHeader>

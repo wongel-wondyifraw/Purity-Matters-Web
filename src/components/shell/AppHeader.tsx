@@ -60,14 +60,14 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
     };
   }, [isProfileOpen]);
 
-  const initials = getInitials();
+  const initials = getInitials() || "PM";
   const shortName = user
-    ? `${user.firstName} ${user.lastName ? `${user.lastName[0]}.` : ""}`
-    : "Admin User";
+    ? `${user.firstName} ${user.lastName ? `${user.lastName[0]}.` : ""}`.trim()
+    : "Console User";
   const fullName = user
     ? user.fullName ||
       [user.firstName, user.middleName, user.lastName].filter(Boolean).join(" ")
-    : "Administrator";
+    : "Authorized User";
 
   return (
     <header
@@ -79,9 +79,13 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
         <Link
           href="/"
           id="purity-matters-logo-text"
-          className="flex items-center gap-2 shrink-0 select-none cursor-pointer"
+          className="flex items-center gap-2.5 shrink-0 select-none cursor-pointer"
         >
-          <span className="w-2.5 h-2.5 rounded-full bg-[#F6CE46]" />
+          <img
+            src="/icons/icon.svg"
+            alt="Purity Matters Logo"
+            className="w-7 h-7 rounded-lg object-contain shrink-0"
+          />
           <span className="text-base font-bold tracking-tight text-[#202328]">
             Purity Matters
           </span>
@@ -215,7 +219,7 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
                   {shortName}
                 </span>
                 <span className="text-[10px] text-neutral-500 capitalize">
-                  {user?.role || "Admin"}
+                  {user?.role || "Staff"}
                 </span>
               </div>
               <ChevronDown
@@ -245,7 +249,7 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
                     </p>
                     <p className="text-[11px] text-neutral-500 truncate flex items-center gap-1 mt-0.5">
                       <Mail className="w-3 h-3 text-neutral-400 shrink-0" />
-                      <span className="truncate">{user?.email || "admin@puritymatters.org"}</span>
+                      <span className="truncate">{user?.email || "No email registered"}</span>
                     </p>
                   </div>
                 </div>
@@ -255,7 +259,7 @@ export function AppHeader({ onOpenDemographics }: AppHeaderProps = {}) {
                   <span className="text-neutral-500">Access Level</span>
                   <span className="px-2 py-0.5 rounded-full bg-[#202328] text-white text-[10px] font-medium capitalize flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-[#F6CE46]" />
-                    <span>{user?.role || "Administrator"}</span>
+                    <span>{user?.role || "Staff"}</span>
                   </span>
                 </div>
 

@@ -45,71 +45,130 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Check and restore session on mount (instant from cache, then background verify)
+  // Check and restore session on mount with timeout and validated isolation
   useEffect(() => {
+    let isMounted = true;
+
     async function restoreSession() {
       try {
-        const storedToken = localStorage.getItem(TOKEN_KEY);
-        const cachedUserJson = localStorage.getItem(USER_CACHE_KEY);
+        const storedToken = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
+        const cachedUserJson = typeof window !== "undefined" ? localStorage.getItem(USER_CACHE_KEY) : null;
 
         if (!storedToken) {
-          setIsLoading(false);
+          if (isMounted) {
+            setToken(null);
+            setUser(null);
+            setIsLoading(false);
+          }
           return;
         }
 
-        // Instant optimistic session restoration
-        setToken(storedToken);
-
+        let parsedUser: ConsoleUser | null = null;
         if (cachedUserJson) {
           try {
-            const cached = JSON.parse(cachedUserJson);
-            setUser(cached);
-            // Immediately mark as loaded so user sees interface without delay
-            setIsLoading(false);
+            parsedUser = JSON.parse(cachedUserJson);
+            if (isMounted && parsedUser) {
+              setToken(storedToken);
+              setUser(parsedUser);
+              setIsLoading(false);
+            }
           } catch {
-            // cache parse error, will wait for network verification
+            parsedUser = null;
           }
         }
 
-        // Verify token in background against /api/auth/me
+        // Verify token against /api/auth/me with an 8-second timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+
         try {
           const response = await fetch(`${apiUrl}/api/auth/me`, {
             method: "GET",
+            signal: controller.signal,
             headers: {
               Authorization: `Bearer ${storedToken}`,
               "Content-Type": "application/json",
             },
           });
 
+          if (!isMounted) return;
+
           if (response.ok) {
             const freshUser: ConsoleUser = await response.json();
             setUser(freshUser);
-            localStorage.setItem(USER_CACHE_KEY, JSON.stringify(freshUser));
+            setToken(storedToken);
+            if (typeof window !== "undefined") {
+              localStorage.setItem(USER_CACHE_KEY, JSON.stringify(freshUser));
+            }
           } else if (response.status === 401 || response.status === 403) {
-            // Server explicitly rejected the token (expired or invalid)
-            localStorage.removeItem(TOKEN_KEY);
-            localStorage.removeItem(USER_CACHE_KEY);
+            // Token rejected by server
+            if (typeof window !== "undefined") {
+              localStorage.removeItem(TOKEN_KEY);
+              localStorage.removeItem(USER_CACHE_KEY);
+            }
+            setToken(null);
+            setUser(null);
+          } else {
+            // Server error: if no parsed user exists, clear session
+            if (!parsedUser) {
+              if (typeof window !== "undefined") {
+                localStorage.removeItem(TOKEN_KEY);
+              }
+              setToken(null);
+              setUser(null);
+            }
+          }
+        } catch (networkErr: any) {
+          if (!isMounted) return;
+          // If offline or unreachable, only keep session if we have cached user data.
+          // Otherwise, clear the orphaned token to avoid an unauthenticated hanging screen.
+          if (!parsedUser) {
+            if (typeof window !== "undefined") {
+              localStorage.removeItem(TOKEN_KEY);
+            }
             setToken(null);
             setUser(null);
           }
-        } catch (networkErr) {
-          // Network drop, offline, server restart, or transient hiccup:
-          // Keep cached credentials active so user is NOT kicked to login!
-          console.warn("Background auth session check skipped (offline/unreachable):", networkErr);
+        } finally {
+          clearTimeout(timeoutId);
+          if (isMounted) {
+            setIsLoading(false);
+          }
         }
       } catch (err) {
-        console.warn("Auth session verification warning:", err);
-      } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
     restoreSession();
+
+    return () => {
+      isMounted = false;
+    };
   }, [apiUrl]);
 
-  // Route protection effect and pointer-events cleanup
+  // Listen for unauthorized 401/403 events from API requests to auto-logout
   useEffect(() => {
-    // Guarantee pointer-events are always active across navigation
+    const handleUnauthorized = () => {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_CACHE_KEY);
+      }
+      setToken(null);
+      setUser(null);
+      router.push("/login");
+    };
+
+    window.addEventListener("purity:unauthorized", handleUnauthorized);
+    return () => {
+      window.removeEventListener("purity:unauthorized", handleUnauthorized);
+    };
+  }, [router]);
+
+  // Route protection effect and pointer-events defensive cleanup
+  useEffect(() => {
     if (typeof document !== "undefined") {
       document.body.style.pointerEvents = "";
       document.documentElement.style.pointerEvents = "";
@@ -118,19 +177,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isLoading) return;
 
     const isAuthRoute = pathname === "/login";
+    const hasValidSession = Boolean(token && user);
 
-    if (!token && !isAuthRoute) {
+    if (!hasValidSession && !isAuthRoute) {
       router.push("/login");
-    } else if (token && isAuthRoute) {
+    } else if (hasValidSession && isAuthRoute) {
       router.push("/");
     }
-  }, [token, isLoading, pathname, router]);
+  }, [token, user, isLoading, pathname, router]);
 
   const login = useCallback(
     async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       try {
         const response = await fetch(`${apiUrl}/api/auth/login`, {
           method: "POST",
+          signal: controller.signal,
           headers: {
             "Content-Type": "application/json",
           },
@@ -148,8 +212,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const { accessToken, user: loggedInUser } = data;
 
-        localStorage.setItem(TOKEN_KEY, accessToken);
-        localStorage.setItem(USER_CACHE_KEY, JSON.stringify(loggedInUser));
+        if (typeof window !== "undefined") {
+          localStorage.setItem(TOKEN_KEY, accessToken);
+          localStorage.setItem(USER_CACHE_KEY, JSON.stringify(loggedInUser));
+        }
 
         setToken(accessToken);
         setUser(loggedInUser);
@@ -157,28 +223,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.push("/");
         return { success: true };
       } catch (err: any) {
+        if (err?.name === "AbortError") {
+          return {
+            success: false,
+            error: "Authentication server timed out. Please check your internet connection.",
+          };
+        }
         return {
           success: false,
           error: err?.message || "Unable to connect to the authentication server",
         };
+      } finally {
+        clearTimeout(timeoutId);
       }
     },
     [apiUrl, router],
   );
 
   const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_CACHE_KEY);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_CACHE_KEY);
+      window.dispatchEvent(new CustomEvent("purity:logout"));
+    }
     setToken(null);
     setUser(null);
     router.push("/login");
   }, [router]);
 
   const getInitials = useCallback((): string => {
-    if (!user) return "PM";
+    if (!user) return "";
     const firstInitial = user.firstName ? user.firstName.charAt(0).toUpperCase() : "";
     const lastInitial = user.lastName ? user.lastName.charAt(0).toUpperCase() : "";
-    return `${firstInitial}${lastInitial}` || "AD";
+    return `${firstInitial}${lastInitial}` || (user.email ? user.email.charAt(0).toUpperCase() : "");
   }, [user]);
 
   const getTimeGreeting = useCallback((): string => {
@@ -189,7 +266,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     token,
     isLoading,
-    isAuthenticated: !!token && !!user,
+    isAuthenticated: Boolean(token && user),
     login,
     logout,
     getInitials,

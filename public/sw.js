@@ -1,14 +1,22 @@
 // Service Worker for Purity Matters Web Console PWA
-const CACHE_NAME = "purity-matters-pwa-v5";
+const CACHE_NAME = "purity-matters-pwa-v7";
 const STATIC_ASSETS = [
   "/manifest.json",
+  "/manifest.json?v=2",
   "/icons/icon-192x192.png",
+  "/icons/icon-192x192.png?v=2",
   "/icons/icon-512x512.png",
+  "/icons/icon-512x512.png?v=2",
   "/icons/icon-maskable-512x512.png",
+  "/icons/icon-maskable-512x512.png?v=2",
   "/icons/apple-touch-icon.png",
+  "/icons/apple-touch-icon.png?v=2",
   "/icons/icon.svg",
+  "/icons/icon.svg?v=2",
   "/favicon.ico",
-  "/favicon.png"
+  "/favicon.ico?v=2",
+  "/favicon.png",
+  "/favicon.png?v=2"
 ];
 
 // Install Event - Precache only immutable static icon assets
@@ -18,10 +26,11 @@ self.addEventListener("install", (event) => {
       return cache.addAll(STATIC_ASSETS);
     })
   );
-  self.skipWaiting();
+  // Do not call self.skipWaiting() automatically to avoid breaking active sessions.
+  // Instead, wait for clients to coordinate or reload cleanly.
 });
 
-// Activate Event - Purge previous caches immediately
+// Activate Event - Purge previous caches safely
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -35,6 +44,13 @@ self.addEventListener("activate", (event) => {
     })
   );
   self.clients.claim();
+});
+
+// Listen for explicit update activation messages from PwaContext / client UI
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 // Fetch Event - Never intercept API, cross-origin, or Next.js dynamic data requests
@@ -65,15 +81,28 @@ self.addEventListener("fetch", (event) => {
           }
           return networkResponse;
         })
-        .catch(() => caches.match(event.request))
+        .catch(async () => {
+          const cached = await caches.match(event.request);
+          if (cached) return cached;
+          // Gracefully return a fallback or 503 instead of an unhandled rejection
+          return new Response("Asset temporarily unavailable", {
+            status: 503,
+            statusText: "Service Unavailable",
+            headers: { "Content-Type": "text/plain" },
+          });
+        })
     );
     return;
   }
 
-  // Static icon assets: cache-first
-  if (url.pathname.startsWith("/icons")) {
+  // Static icon and manifest assets: cache-first with query-parameter flexibility
+  if (
+    url.pathname.startsWith("/icons") ||
+    url.pathname.startsWith("/favicon") ||
+    url.pathname === "/manifest.json"
+  ) {
     event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
+      caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
         if (cachedResponse) return cachedResponse;
         return fetch(event.request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {

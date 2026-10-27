@@ -37,6 +37,7 @@ import {
 } from "@/types/admin";
 import { ConsoleUser } from "@/types/auth";
 import { useToast } from "@/components/ui/toast";
+import { useAuth } from "@/context/AuthContext";
 import { triggerHaptic } from "@/lib/haptic";
 import {
   getApiUrl,
@@ -242,6 +243,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const apiUrl = getApiUrl();
+  const { isAuthenticated } = useAuth();
 
   // Local UI filters & clipboard state
   const [clientFilter, setClientFilter] = useState<string>("all");
@@ -250,11 +252,27 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
+  // Clear query cache on logout or unauthorized responses to prevent cross-account data leaks
+  useEffect(() => {
+    const handleClearAuthData = () => {
+      queryClient.cancelQueries({ queryKey: ["admin"] });
+      queryClient.removeQueries({ queryKey: ["admin"] });
+      queryClient.clear();
+    };
+
+    window.addEventListener("purity:logout", handleClearAuthData);
+    window.addEventListener("purity:unauthorized", handleClearAuthData);
+    return () => {
+      window.removeEventListener("purity:logout", handleClearAuthData);
+      window.removeEventListener("purity:unauthorized", handleClearAuthData);
+    };
+  }, [queryClient]);
+
   // Active window resume & PWA visibility synchronization (debounced to avoid thread congestion)
   useEffect(() => {
     let resumeTimer: ReturnType<typeof setTimeout> | null = null;
     const handleResume = () => {
-      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+      if (typeof document !== "undefined" && document.visibilityState === "visible" && isAuthenticated) {
         if (resumeTimer) clearTimeout(resumeTimer);
         resumeTimer = setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["admin"], refetchType: "active" });
@@ -270,14 +288,16 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("visibilitychange", handleResume);
       window.removeEventListener("online", handleResume);
     };
-  }, [queryClient]);
+  }, [queryClient, isAuthenticated]);
 
   // =================== TANSTACK QUERIES ===================
   // Optimized polling intervals: Never poll in background; responsive when visible without CPU choke
+  // All queries strictly enabled ONLY when a valid user session is authenticated.
 
   const clientsQuery = useQuery({
     queryKey: ["admin", "clients"],
     queryFn: fetchClientsApi,
+    enabled: Boolean(isAuthenticated),
     refetchInterval: 25000,
     refetchIntervalInBackground: false,
   });
@@ -285,6 +305,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const counselingQuery = useQuery({
     queryKey: ["admin", "counseling"],
     queryFn: fetchCounselingApi,
+    enabled: Boolean(isAuthenticated),
     refetchInterval: 15000,
     refetchIntervalInBackground: false,
   });
@@ -292,6 +313,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const innerHealingQuery = useQuery({
     queryKey: ["admin", "inner-healing"],
     queryFn: fetchInnerHealingApi,
+    enabled: Boolean(isAuthenticated),
     refetchInterval: 15000,
     refetchIntervalInBackground: false,
   });
@@ -299,6 +321,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const coursesQuery = useQuery({
     queryKey: ["admin", "courses"],
     queryFn: fetchCoursesApi,
+    enabled: Boolean(isAuthenticated),
     refetchInterval: 45000,
     refetchIntervalInBackground: false,
   });
@@ -306,6 +329,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const resourceSalesQuery = useQuery({
     queryKey: ["admin", "resource-sales"],
     queryFn: fetchResourceSalesApi,
+    enabled: Boolean(isAuthenticated),
     refetchInterval: 25000,
     refetchIntervalInBackground: false,
   });
@@ -313,6 +337,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const catalogQuery = useQuery({
     queryKey: ["admin", "resource-catalog"],
     queryFn: fetchResourceCatalogApi,
+    enabled: Boolean(isAuthenticated),
     refetchInterval: 45000,
     refetchIntervalInBackground: false,
   });
@@ -320,6 +345,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const ordersQuery = useQuery({
     queryKey: ["admin", "physical-orders"],
     queryFn: fetchPhysicalBookOrdersApi,
+    enabled: Boolean(isAuthenticated),
     refetchInterval: 15000,
     refetchIntervalInBackground: false,
   });
@@ -327,6 +353,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const usersQuery = useQuery({
     queryKey: ["admin", "users"],
     queryFn: fetchSystemUsersApi,
+    enabled: Boolean(isAuthenticated),
     refetchInterval: 60000,
     refetchIntervalInBackground: false,
   });
@@ -334,6 +361,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const questionsQuery = useQuery({
     queryKey: ["admin", "questions"],
     queryFn: fetchAnonymousQuestionsApi,
+    enabled: Boolean(isAuthenticated),
     refetchInterval: 15000,
     refetchIntervalInBackground: false,
   });
@@ -341,6 +369,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const paymentSettingsQuery = useQuery({
     queryKey: ["admin", "payment-settings"],
     queryFn: fetchPaymentSettingsApi,
+    enabled: Boolean(isAuthenticated),
     refetchInterval: 60000,
     refetchIntervalInBackground: false,
   });
@@ -348,6 +377,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const resourceOrdersQuery = useQuery<ResourceOrderRecord[]>({
     queryKey: ["admin", "resource-orders"],
     queryFn: () => fetchResourceOrdersApi(),
+    enabled: Boolean(isAuthenticated),
     refetchInterval: 15000,
     refetchIntervalInBackground: false,
   });
@@ -355,6 +385,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const donationsQuery = useQuery<DonationRecord[]>({
     queryKey: ["admin", "donations"],
     queryFn: () => fetchDonationsApi(),
+    enabled: Boolean(isAuthenticated),
     refetchInterval: 15000,
     refetchIntervalInBackground: false,
   });
@@ -362,6 +393,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const courseCatalogQuery = useQuery<CourseCatalogItem[]>({
     queryKey: ["admin", "course-catalog"],
     queryFn: () => fetchCourseCatalogApi(),
+    enabled: Boolean(isAuthenticated),
     refetchInterval: 30000,
     refetchIntervalInBackground: false,
   });
@@ -381,6 +413,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const courseEnrollmentsQuery = useQuery<CourseEnrollmentRecord[]>({
     queryKey: ["admin", "course-enrollments", courseEnrollmentFilter],
     queryFn: () => fetchCourseEnrollmentsApi(courseEnrollmentFilter),
+    enabled: Boolean(isAuthenticated),
     refetchInterval: 30000,
     refetchIntervalInBackground: false,
   });

@@ -18,8 +18,12 @@ export function IosInstallModal() {
     <Dialog open={showIosInstructions} onOpenChange={setShowIosInstructions}>
       <DialogContent className="max-w-sm bg-white rounded-3xl border border-black/10 p-6 text-[#202328] shadow-2xl">
         <DialogHeader className="pb-3 border-b border-black/[0.06] text-center">
-          <div className="w-12 h-12 rounded-2xl bg-[#202328] text-[#F6CE46] font-bold text-xl flex items-center justify-center mx-auto mb-2 shadow-xs">
-            PM
+          <div className="w-14 h-14 rounded-2xl overflow-hidden bg-white border border-black/10 flex items-center justify-center mx-auto mb-2 shadow-xs p-1">
+            <img
+              src="/icons/icon.svg"
+              alt="Purity Matters Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
           <DialogTitle className="text-base font-bold text-[#202328]">
             Install Purity Matters

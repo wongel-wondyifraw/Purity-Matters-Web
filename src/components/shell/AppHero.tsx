@@ -16,7 +16,7 @@ export function AppHero() {
     resourceCount,
   } = useAdminData();
   const { user, timeGreeting } = useAuth();
-  const displayName = user?.firstName || "Admin";
+  const displayName = user?.firstName ? `, ${user.firstName}` : "";
 
   return (
     <section
@@ -28,7 +28,7 @@ export function AppHero() {
       {/* Left Side: Welcome Headline */}
       <div id="crextio-welcome-header">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-normal tracking-tight text-[#202328]">
-          {timeGreeting}, {displayName}
+          {timeGreeting}{displayName}
         </h1>
       </div>
 

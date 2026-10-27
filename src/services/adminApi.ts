@@ -69,7 +69,7 @@ export const getAuthHeaders = (isFormData: boolean = false): HeadersInit => {
  */
 export async function adminFetch(
   endpointOrUrl: string,
-  options: RequestInit = {}
+  options: RequestInit & { timeoutMs?: number } = {}
 ): Promise<Response> {
   const base = getApiUrl();
   const rawUrl = endpointOrUrl.startsWith("http")
@@ -86,14 +86,47 @@ export async function adminFetch(
   const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const authHeaders = getAuthHeaders(isFormData);
 
-  return fetch(finalUrl, {
-    ...options,
-    cache: "no-store",
-    headers: {
-      ...authHeaders,
-      ...(options.headers || {}),
-    },
-  });
+  // Default 15-second timeout to prevent requests from hanging indefinitely
+  const controller = new AbortController();
+  const timeoutMs = options.timeoutMs ?? 15000;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  
+  if (!options.signal) {
+    timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  }
+
+  const signal = options.signal || controller.signal;
+
+  try {
+    const response = await fetch(finalUrl, {
+      ...options,
+      signal,
+      cache: "no-store",
+      headers: {
+        ...authHeaders,
+        ...(options.headers || {}),
+      },
+    });
+
+    if (response.status === 401 || response.status === 403) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("purity_console_token");
+        localStorage.removeItem("purity_console_user");
+        window.dispatchEvent(
+          new CustomEvent("purity:unauthorized", { detail: { status: response.status } })
+        );
+      }
+    }
+
+    return response;
+  } catch (err: any) {
+    if (err?.name === "AbortError") {
+      throw new Error(`Request timed out after ${timeoutMs}ms for ${endpointOrUrl}`);
+    }
+    throw err;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
 }
 
 export const formatDateTime = (dateVal: string | Date | undefined) => {

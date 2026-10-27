@@ -518,7 +518,7 @@ export function MobileBottomNav({ onOpenDemographics }: MobileBottomNavProps) {
                   </div>
                 </div>
                 <span className="text-[10px] text-red-500 font-semibold">
-                  {user?.firstName || "Admin"}
+                  {user?.firstName || "Account"}
                 </span>
               </button>
             </div>

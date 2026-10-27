@@ -67,7 +67,7 @@ export function AnonymousQuestionsTable() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const counselorName = useMemo(() => {
-    if (!user) return "Admin Pastoral Care";
+    if (!user) return "Pastoral Care";
     return user.fullName || `${user.firstName} ${user.lastName || ""}`.trim() || "Pastoral Counselor";
   }, [user]);
 
