@@ -9,10 +9,14 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 0, // Instant data staleness for immediate live background refetching
+            // A short freshness window prevents route changes and resume events from
+            // immediately refetching data that was just loaded.
+            staleTime: 1000 * 20,
             gcTime: 1000 * 60 * 5, // 5 minutes cache
-            refetchOnWindowFocus: true,
-            refetchOnReconnect: true,
+            // AdminDataProvider owns the single debounced resume refresh.
+            refetchOnWindowFocus: false,
+            // AdminDataProvider also handles reconnects as part of its debounced resume event.
+            refetchOnReconnect: false,
             retry: 1,
           },
         },

@@ -18,6 +18,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [isMobileDemographicsOpen, setIsMobileDemographicsOpen] = useState(false);
   const {
     isLoading,
+    dataError,
     isRefreshing,
     hardRefresh,
     totalClients,
@@ -71,6 +72,23 @@ export function AdminShell({ children }: { children: ReactNode }) {
         className="flex-1 flex flex-col min-w-0 w-full h-full overflow-visible lg:overflow-hidden relative"
       >
         <AppHeader onOpenDemographics={() => setIsMobileDemographicsOpen(true)} />
+
+        {dataError && (
+          <div
+            id="admin-data-error-banner"
+            role="alert"
+            className="mx-3.5 mt-3.5 flex items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 lg:mx-6"
+          >
+            <p className="min-w-0">Some data could not be refreshed. Your last loaded records remain available.</p>
+            <button
+              type="button"
+              className="shrink-0 font-semibold underline underline-offset-2"
+              onClick={() => void hardRefresh()}
+            >
+              Try again
+            </button>
+          </div>
+        )}
 
         <main
           id="admin-main"

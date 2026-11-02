@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   HeartHandshake,
   CheckCircle2,
@@ -50,11 +51,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CustomDropdown, DropdownOption } from "@/components/ui/CustomDropdown";
 import { TablePagination } from "@/components/ui/TablePagination";
 import { DonationRecord } from "@/types/admin";
+import { fetchDonationSummaryApi, fetchDonationsPageApi } from "@/services/adminApi";
 
 export function DonationsTable() {
   const {
-    donations,
-    isDonationsLoading,
     verifyDonation,
     rejectDonation,
     deleteDonation,
@@ -63,10 +63,47 @@ export function DonationsTable() {
   } = useAdminData();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [methodFilter, setMethodFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const donationsQuery = useQuery({
+    queryKey: ["admin", "donations", { page: currentPage, limit: pageSize, status: donationsFilter, method: methodFilter, search: debouncedSearch }],
+    queryFn: () => fetchDonationsPageApi({
+      page: currentPage,
+      limit: pageSize,
+      status: donationsFilter,
+      paymentMethod: methodFilter,
+      search: debouncedSearch,
+    }),
+    placeholderData: keepPreviousData,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
+  });
+  const donationSummaryQuery = useQuery({
+    queryKey: ["admin", "donations", "summary"],
+    queryFn: fetchDonationSummaryApi,
+    staleTime: 30000,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
+  });
+
+  React.useEffect(() => {
+    if (donationsQuery.data && !donationsQuery.isPlaceholderData && donationsQuery.data.page !== currentPage) {
+      setCurrentPage(donationsQuery.data.page);
+    }
+  }, [donationsQuery.data, donationsQuery.isPlaceholderData, currentPage]);
+
+  const donations = donationsQuery.data?.items ?? [];
+  const totalDonations = donationsQuery.data?.total ?? 0;
+  const pageError = donationsQuery.error ?? donationSummaryQuery.error;
 
   // Modal states for Verify, Reject, and Delete
   const [verifyingDonation, setVerifyingDonation] = useState<DonationRecord | null>(null);
@@ -86,57 +123,19 @@ export function DonationsTable() {
   };
 
   // KPI Calculations
-  const totalVerifiedAmount = useMemo(() => {
-    return donations
-      .filter((d) => d.status === "verified")
-      .reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
-  }, [donations]);
-
-  const pendingVerificationCount = useMemo(() => {
-    return donations.filter(
-      (d) => d.status === "payment_submitted" || d.status === "pending"
-    ).length;
-  }, [donations]);
-
-  const verifiedCount = useMemo(() => {
-    return donations.filter((d) => d.status === "verified").length;
-  }, [donations]);
-
-  // Filtered donations
-  const filteredDonations = useMemo(() => {
-    return donations.filter((item) => {
-      const q = searchQuery.toLowerCase().trim();
-      const matchesSearch =
-        !q ||
-        item.referenceNumber.toLowerCase().includes(q) ||
-        item.clientName.toLowerCase().includes(q) ||
-        (item.clientUsername && item.clientUsername.toLowerCase().includes(q)) ||
-        (item.clientPhone && item.clientPhone.toLowerCase().includes(q)) ||
-        (item.telegramId && item.telegramId.toLowerCase().includes(q));
-
-      if (!matchesSearch) return false;
-
-      if (donationsFilter !== "all" && item.status !== donationsFilter) {
-        return false;
-      }
-
-      if (methodFilter !== "all" && item.paymentMethod.toLowerCase() !== methodFilter.toLowerCase()) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [donations, searchQuery, donationsFilter, methodFilter]);
-
   // Reset pagination on filter change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, donationsFilter, methodFilter]);
+  }, [debouncedSearch, donationsFilter, methodFilter]);
 
-  const paginatedDonations = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredDonations.slice(start, start + pageSize);
-  }, [filteredDonations, currentPage, pageSize]);
+  const totalVerifiedAmount = donationSummaryQuery.data?.verifiedAmount ?? 0;
+  const pendingVerificationCount = donationSummaryQuery.data?.pendingCount ?? 0;
+  const verifiedCount = donationSummaryQuery.data?.verifiedCount ?? 0;
+
+  const retryFailedRequests = () => {
+    void donationsQuery.refetch();
+    void donationSummaryQuery.refetch();
+  };
 
   const statusDropdownOptions: DropdownOption[] = [
     { value: "all", label: "All Statuses" },
@@ -184,6 +183,18 @@ export function DonationsTable() {
 
   return (
     <div className="flex-1 flex flex-col gap-4 min-h-0 w-full">
+      {pageError && (
+        <div
+          id="donations-load-error"
+          role="alert"
+          className="flex items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+        >
+          <p>Some donation data could not be refreshed. Previously loaded records remain visible.</p>
+          <button type="button" className="shrink-0 font-semibold underline" onClick={retryFailedRequests}>
+            Retry
+          </button>
+        </div>
+      )}
       {/* 1. TOP STATS CARDS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 shrink-0">
         {/* Total Raised */}
@@ -212,7 +223,7 @@ export function DonationsTable() {
           </div>
           <div className="mt-2">
             <div className="text-xl sm:text-2xl font-black text-[#202328] tracking-tight">
-              {donations.length}
+              {donationSummaryQuery.data?.total ?? "—"}
             </div>
             <p className="text-[11px] text-neutral-400 mt-0.5">All Recorded Donations</p>
           </div>
@@ -263,7 +274,7 @@ export function DonationsTable() {
               <span className="w-2 h-2 rounded-full bg-[#F6CE46] shrink-0" />
               <span>Ministry Donations & Giving</span>
               <span className="text-xs font-semibold bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full ml-1">
-                {filteredDonations.length}
+                {totalDonations}
               </span>
             </CardTitle>
             <CardDescription className="text-xs text-neutral-500 font-normal mt-0.5">
@@ -338,7 +349,7 @@ export function DonationsTable() {
               </TableHeader>
 
               <TableBody>
-                {isDonationsLoading ? (
+                {donationsQuery.isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i} className="border-b border-black/[0.04]">
                       <TableCell className="pl-4 py-3"><Skeleton className="h-4 w-28" /></TableCell>
@@ -350,7 +361,16 @@ export function DonationsTable() {
                       <TableCell className="pr-4 py-3 text-right"><Skeleton className="h-6 w-20 ml-auto" /></TableCell>
                     </TableRow>
                   ))
-                ) : paginatedDonations.length === 0 ? (
+                ) : donationsQuery.isError && !donationsQuery.data ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="py-8 text-center text-sm text-red-700">
+                      Donation records could not be loaded. Check the connection and retry.
+                      <button type="button" className="ml-2 font-semibold underline" onClick={() => void donationsQuery.refetch()}>
+                        Retry
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ) : donations.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="h-64 text-center">
                       <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto text-neutral-400">
@@ -367,7 +387,7 @@ export function DonationsTable() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedDonations.map((item) => {
+                  donations.map((item) => {
                     const isTelebirr = item.paymentMethod.toLowerCase() === "telebirr";
                     const isCbe = item.paymentMethod.toLowerCase() === "cbe";
 
@@ -542,9 +562,12 @@ export function DonationsTable() {
             <TablePagination
               currentPage={currentPage}
               pageSize={pageSize}
-              totalItems={filteredDonations.length}
+              totalItems={totalDonations}
               onPageChange={setCurrentPage}
-              onPageSizeChange={setPageSize}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
             />
           </div>
         </CardContent>

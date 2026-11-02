@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { useToast } from "@/components/ui/toast";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -37,6 +37,9 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIos, setIsIos] = useState(false);
   const [showIosInstructions, setShowIosInstructions] = useState(false);
+  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
+  const updateRequested = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -51,6 +54,18 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     };
 
     checkStandalone();
+    setIsOnline(navigator.onLine);
+
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    const handleControllerChange = () => {
+      if (updateRequested.current) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    navigator.serviceWorker?.addEventListener("controllerchange", handleControllerChange);
 
     // 2. Detect iOS device
     const userAgent = window.navigator.userAgent.toLowerCase();
@@ -72,9 +87,9 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
         navigator.serviceWorker
           .register("/sw.js")
           .then((reg) => {
-            // If a worker is waiting, immediately activate it
+            // Keep an update waiting until the user chooses a safe reload point.
             if (reg.waiting) {
-              reg.waiting.postMessage({ type: "SKIP_WAITING" });
+              setWaitingWorker(reg.waiting);
             }
 
             // Check for updates when worker installs
@@ -86,7 +101,7 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
                     installingWorker.state === "installed" &&
                     navigator.serviceWorker.controller
                   ) {
-                    installingWorker.postMessage({ type: "SKIP_WAITING" });
+                    setWaitingWorker(installingWorker);
                   }
                 };
               }
@@ -132,6 +147,9 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleAppInstalled);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+      navigator.serviceWorker?.removeEventListener("controllerchange", handleControllerChange);
       if (onVisibilityChange) {
         document.removeEventListener("visibilitychange", onVisibilityChange);
       }
@@ -178,7 +196,37 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
         setShowIosInstructions,
       }}
     >
-      {children}
+      <div id="pwa-app-shell" className="contents">
+        {children}
+      </div>
+      {!isOnline && (
+        <div
+          id="pwa-offline-banner"
+          role="status"
+          className="fixed inset-x-3 top-3 z-[100] mx-auto max-w-xl rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-lg"
+        >
+          You are offline. Records already on this screen may remain visible; new data needs a connection.
+        </div>
+      )}
+      {waitingWorker && (
+        <div
+          id="pwa-update-banner"
+          role="status"
+          className="fixed inset-x-3 bottom-3 z-[100] mx-auto flex max-w-xl items-center justify-between gap-3 rounded-xl bg-[#202328] px-4 py-3 text-sm text-white shadow-xl"
+        >
+          <p>A new version is ready. Reload when you are ready to update.</p>
+          <button
+            type="button"
+            className="shrink-0 rounded-lg bg-[#F6CE46] px-3 py-2 font-semibold text-[#202328]"
+            onClick={() => {
+              updateRequested.current = true;
+              waitingWorker.postMessage({ type: "SKIP_WAITING" });
+            }}
+          >
+            Update now
+          </button>
+        </div>
+      )}
     </PwaContext.Provider>
   );
 }

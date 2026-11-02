@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   HelpCircle,
   Search,
@@ -43,13 +44,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AnonymousQuestionRecord } from "@/types/admin";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { TablePagination } from "@/components/ui/TablePagination";
+import { fetchAnonymousQuestionsPageApi } from "@/services/adminApi";
 
 export function AnonymousQuestionsTable() {
   const {
-    anonymousQuestions,
     answerAnonymousQuestion,
     deleteAnonymousQuestion,
-    isQuestionsLoading,
     syncWithRemoteBackend,
     hardRefresh,
     isRefreshing,
@@ -57,6 +57,9 @@ export function AnonymousQuestionsTable() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [selectedQuestion, setSelectedQuestion] =
     useState<AnonymousQuestionRecord | null>(null);
   const [answerDraft, setAnswerDraft] = useState<string>("");
@@ -71,32 +74,37 @@ export function AnonymousQuestionsTable() {
     return user.fullName || `${user.firstName} ${user.lastName || ""}`.trim() || "Pastoral Counselor";
   }, [user]);
 
-  const filteredQuestions = useMemo(() => {
-    return anonymousQuestions.filter((item) => {
-      const matchSearch =
-        item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.referenceNumber.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchStatus =
-        statusFilter === "all" ? true : item.status === statusFilter;
-
-      return matchSearch && matchStatus;
-    });
-  }, [anonymousQuestions, searchQuery, statusFilter]);
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Reset page when search or filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter]);
+  }, [debouncedSearch, statusFilter]);
 
-  const paginatedQuestions = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredQuestions.slice(start, start + pageSize);
-  }, [filteredQuestions, currentPage, pageSize]);
+  const questionsQuery = useQuery({
+    queryKey: ["admin", "questions", { page: currentPage, limit: pageSize, status: statusFilter, search: debouncedSearch }],
+    queryFn: () => fetchAnonymousQuestionsPageApi({
+      page: currentPage,
+      limit: pageSize,
+      status: statusFilter,
+      search: debouncedSearch,
+    }),
+    placeholderData: keepPreviousData,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
+  });
+
+  React.useEffect(() => {
+    if (questionsQuery.data && !questionsQuery.isPlaceholderData && questionsQuery.data.page !== currentPage) {
+      setCurrentPage(questionsQuery.data.page);
+    }
+  }, [questionsQuery.data, questionsQuery.isPlaceholderData, currentPage]);
+
+  const paginatedQuestions = questionsQuery.data?.items ?? [];
+  const totalQuestions = questionsQuery.data?.total ?? 0;
 
   const handleOpenAnswer = (q: AnonymousQuestionRecord) => {
     setSelectedQuestion(q);
@@ -208,7 +216,14 @@ export function AnonymousQuestionsTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isQuestionsLoading ? (
+                {questionsQuery.isError && questionsQuery.data && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="bg-amber-50 py-2 text-center text-xs text-amber-900">
+                      Refresh failed. Showing the last loaded questions.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {questionsQuery.isLoading ? (
                   Array.from({ length: 5 }).map((_, idx) => (
                     <TableRow key={`aq-skel-${idx}`} className="border-b border-black/[0.04]">
                       <TableCell className="px-4 py-3 align-top"><Skeleton className="h-4 w-16 rounded-md" /></TableCell>
@@ -223,7 +238,16 @@ export function AnonymousQuestionsTable() {
                       <TableCell className="text-right px-4 align-top"><Skeleton className="h-6 w-16 rounded-full ml-auto" /></TableCell>
                     </TableRow>
                   ))
-                ) : filteredQuestions.length === 0 ? (
+                ) : questionsQuery.isError && !questionsQuery.data ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-8 text-center text-sm text-red-700">
+                      Questions could not be loaded. Check the connection and retry.
+                      <button type="button" className="ml-2 font-semibold underline" onClick={() => void questionsQuery.refetch()}>
+                        Retry
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedQuestions.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={6}
@@ -437,10 +461,13 @@ export function AnonymousQuestionsTable() {
       {/* Pagination Footer */}
       <TablePagination
         currentPage={currentPage}
-        totalItems={filteredQuestions.length}
+        totalItems={totalQuestions}
         pageSize={pageSize}
         onPageChange={setCurrentPage}
-        onPageSizeChange={setPageSize}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setCurrentPage(1);
+        }}
         itemLabel="questions"
       />
 

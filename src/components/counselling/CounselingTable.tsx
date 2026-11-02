@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { HeartHandshake, RefreshCw, Trash2, Search } from "lucide-react";
 import {
   Card,
@@ -33,11 +34,10 @@ import { AddCounselingModal } from "./AddCounselingModal";
 import { SearchableCounselorSelect } from "./SearchableCounselorSelect";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { TablePagination } from "@/components/ui/TablePagination";
+import { fetchCounselingPageApi } from "@/services/adminApi";
 
 export function CounselingTable() {
   const {
-    counselingRequests,
-    isCounselingLoading,
     counselingFilter,
     setCounselingFilter,
     updateCounselingStatus,
@@ -45,23 +45,7 @@ export function CounselingTable() {
   } = useAdminData();
 
   const [searchQuery, setSearchQuery] = useState("");
-
-  const filteredCounseling = useMemo(() => {
-    return counselingRequests.filter((item) => {
-      const q = searchQuery.toLowerCase().trim();
-      const matchesSearch =
-        !q ||
-        item.clientName.toLowerCase().includes(q) ||
-        item.referenceNumber.toLowerCase().includes(q) ||
-        item.concern.toLowerCase().includes(q) ||
-        (item.assignedTo && item.assignedTo.toLowerCase().includes(q)) ||
-        (item.phone && item.phone.toLowerCase().includes(q));
-
-      if (!matchesSearch) return false;
-      if (counselingFilter === "all") return true;
-      return item.status === counselingFilter;
-    });
-  }, [counselingRequests, counselingFilter, searchQuery]);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -69,12 +53,34 @@ export function CounselingTable() {
   // Reset to first page on search or filter change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, counselingFilter]);
+  }, [debouncedSearch, counselingFilter]);
 
-  const paginatedCounseling = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredCounseling.slice(start, start + pageSize);
-  }, [filteredCounseling, currentPage, pageSize]);
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const counselingQuery = useQuery({
+    queryKey: ["admin", "counseling", { page: currentPage, limit: pageSize, status: counselingFilter, search: debouncedSearch }],
+    queryFn: () => fetchCounselingPageApi({
+      page: currentPage,
+      limit: pageSize,
+      status: counselingFilter,
+      search: debouncedSearch,
+    }),
+    placeholderData: keepPreviousData,
+    refetchInterval: 45000,
+    refetchIntervalInBackground: false,
+  });
+
+  React.useEffect(() => {
+    if (counselingQuery.data && !counselingQuery.isPlaceholderData && counselingQuery.data.page !== currentPage) {
+      setCurrentPage(counselingQuery.data.page);
+    }
+  }, [counselingQuery.data, counselingQuery.isPlaceholderData, currentPage]);
+
+  const paginatedCounseling = counselingQuery.data?.items ?? [];
+  const totalCounseling = counselingQuery.data?.total ?? 0;
 
   return (
     <Card className="flex-1 flex flex-col min-h-0 h-full bg-white/90 backdrop-blur-md border border-black/[0.06] rounded-2xl shadow-2xs overflow-hidden">
@@ -158,7 +164,14 @@ export function CounselingTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isCounselingLoading ? (
+              {counselingQuery.isError && counselingQuery.data && (
+                <TableRow>
+                  <TableCell colSpan={7} className="bg-amber-50 py-2 text-center text-xs text-amber-900">
+                    Refresh failed. Showing the last loaded counseling requests.
+                  </TableCell>
+                </TableRow>
+              )}
+              {counselingQuery.isLoading ? (
                 Array.from({ length: 5 }).map((_, idx) => (
                   <TableRow key={`cn-skel-${idx}`} className="border-b border-black/[0.04]">
                     <TableCell className="px-4 py-3 align-top"><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
@@ -175,7 +188,16 @@ export function CounselingTable() {
                     <TableCell className="text-right px-4 align-top"><Skeleton className="h-7 w-20 rounded-full ml-auto" /></TableCell>
                   </TableRow>
                 ))
-              ) : filteredCounseling.length === 0 ? (
+              ) : counselingQuery.isError && !counselingQuery.data ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-8 text-center text-sm text-red-700">
+                    Counseling requests could not be loaded. Check the connection and retry.
+                    <button type="button" className="ml-2 font-semibold underline" onClick={() => void counselingQuery.refetch()}>
+                      Retry
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ) : paginatedCounseling.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={7}
@@ -361,10 +383,13 @@ export function CounselingTable() {
       {/* Pagination Footer */}
       <TablePagination
         currentPage={currentPage}
-        totalItems={filteredCounseling.length}
+        totalItems={totalCounseling}
         pageSize={pageSize}
         onPageChange={setCurrentPage}
-        onPageSizeChange={setPageSize}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setCurrentPage(1);
+        }}
         itemLabel="requests"
       />
     </Card>

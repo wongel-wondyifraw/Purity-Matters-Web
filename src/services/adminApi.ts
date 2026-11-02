@@ -85,6 +85,8 @@ export async function adminFetch(
 
   const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const authHeaders = getAuthHeaders(isFormData);
+  const requestPath = new URL(finalUrl).pathname;
+  const startedAt = Date.now();
 
   // Default 15-second timeout to prevent requests from hanging indefinitely
   const controller = new AbortController();
@@ -108,6 +110,14 @@ export async function adminFetch(
       },
     });
 
+    // Log only method, route, status, and duration; never log tokens or query values.
+    console.debug("[Admin API] Request completed", {
+      method,
+      path: requestPath,
+      status: response.status,
+      durationMs: Date.now() - startedAt,
+    });
+
     if (response.status === 401 || response.status === 403) {
       if (typeof window !== "undefined") {
         localStorage.removeItem("purity_console_token");
@@ -120,6 +130,12 @@ export async function adminFetch(
 
     return response;
   } catch (err: any) {
+    console.warn("[Admin API] Request failed", {
+      method,
+      path: requestPath,
+      durationMs: Date.now() - startedAt,
+      reason: err?.name === "AbortError" ? "timeout" : "network error",
+    });
     if (err?.name === "AbortError") {
       throw new Error(`Request timed out after ${timeoutMs}ms for ${endpointOrUrl}`);
     }
@@ -147,7 +163,7 @@ export async function fetchClientsApi(): Promise<ClientRecord[]> {
   const res = await adminFetch("/api/admin/clients");
   if (!res.ok) throw new Error(`Failed to fetch clients: ${res.statusText}`);
   const data = await res.json();
-  if (!Array.isArray(data)) return [];
+  if (!Array.isArray(data)) throw new Error("Invalid list response from the API.");
   return data.map((item: any) => ({
     id: item.id,
     telegramId: String(item.telegramId),
@@ -175,12 +191,8 @@ export async function fetchClientsApi(): Promise<ClientRecord[]> {
   }));
 }
 
-export async function fetchCounselingApi(): Promise<CounselingRecord[]> {
-  const res = await adminFetch("/api/admin/counseling");
-  if (!res.ok) throw new Error(`Failed to fetch counseling: ${res.statusText}`);
-  const data = await res.json();
-  if (!Array.isArray(data)) return [];
-  return data.map((item: any) => ({
+function mapCounselingRequest(item: any): CounselingRecord {
+  return {
     id: item.id,
     referenceNumber: item.referenceNumber || `CN-${item.id}`,
     telegramId: String(item.telegramId),
@@ -194,14 +206,51 @@ export async function fetchCounselingApi(): Promise<CounselingRecord[]> {
     assignedTo: item.assignedTo || undefined,
     scheduledAt: item.scheduledAt ? formatDateTime(item.scheduledAt) : undefined,
     createdAt: formatDateTime(item.createdAt),
-  }));
+  };
+}
+
+export async function fetchCounselingApi(): Promise<CounselingRecord[]> {
+  const res = await adminFetch("/api/admin/counseling");
+  if (!res.ok) throw new Error(`Failed to fetch counseling: ${res.statusText}`);
+  const data = await res.json();
+  if (!Array.isArray(data)) throw new Error("Invalid counseling response from the API.");
+  return data.map(mapCounselingRequest);
+}
+
+export async function fetchCounselingPageApi(params: {
+  page: number;
+  limit: number;
+  status: string;
+  search: string;
+}): Promise<{ items: CounselingRecord[]; total: number; page: number; limit: number; totalPages: number }> {
+  const query = new URLSearchParams({
+    page: String(params.page),
+    limit: String(params.limit),
+    status: params.status,
+    search: params.search,
+  });
+  const res = await adminFetch(`/api/admin/counseling?${query.toString()}`);
+  if (!res.ok) throw new Error(`Failed to fetch counseling: ${res.status}`);
+  const result = await res.json();
+  if (!result || !Array.isArray(result.items) || typeof result.total !== "number") {
+    throw new Error("Invalid paginated counseling response from the API.");
+  }
+  return { ...result, items: result.items.map(mapCounselingRequest) };
+}
+
+export async function fetchCounselingCountApi(): Promise<number> {
+  const res = await adminFetch("/api/admin/counseling/count");
+  if (!res.ok) throw new Error(`Failed to fetch counseling count: ${res.status}`);
+  const count = await res.json();
+  if (typeof count !== "number") throw new Error("Invalid counseling count from the API.");
+  return count;
 }
 
 export async function fetchInnerHealingApi(): Promise<InnerHealingRecord[]> {
   const res = await adminFetch("/api/admin/inner-healing");
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error(`Failed to fetch inner healing requests: ${res.status}`);
   const data = await res.json();
-  if (!Array.isArray(data)) return [];
+  if (!Array.isArray(data)) throw new Error("Invalid list response from the API.");
   return data.map((item: any) => ({
     id: item.id,
     referenceNumber: item.referenceNumber || `IH-${item.id}`,
@@ -216,9 +265,9 @@ export async function fetchInnerHealingApi(): Promise<InnerHealingRecord[]> {
 
 export async function fetchCoursesApi(): Promise<CourseProgressRecord[]> {
   const res = await adminFetch("/api/admin/courses");
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error(`Failed to fetch course progress: ${res.status}`);
   const data = await res.json();
-  if (!Array.isArray(data)) return [];
+  if (!Array.isArray(data)) throw new Error("Invalid list response from the API.");
   return data.map((item: any) => ({
     id: item.id,
     telegramId: String(item.telegramId),
@@ -239,9 +288,9 @@ export async function fetchCoursesApi(): Promise<CourseProgressRecord[]> {
 
 export async function fetchResourceSalesApi(): Promise<ResourceSaleRecord[]> {
   const res = await adminFetch("/api/admin/resources");
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error(`Failed to fetch resource sales: ${res.status}`);
   const data = await res.json();
-  if (!Array.isArray(data)) return [];
+  if (!Array.isArray(data)) throw new Error("Invalid list response from the API.");
   return data.map((item: any) => ({
     id: item.id,
     telegramId: String(item.telegramId),
@@ -257,9 +306,9 @@ export async function fetchResourceSalesApi(): Promise<ResourceSaleRecord[]> {
 
 export async function fetchResourceCatalogApi(): Promise<ResourceCatalogItem[]> {
   const res = await adminFetch("/api/admin/resources/catalog");
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error(`Failed to fetch resource catalog: ${res.status}`);
   const data = await res.json();
-  if (!Array.isArray(data)) return [];
+  if (!Array.isArray(data)) throw new Error("Invalid list response from the API.");
   return data.map((r: any) => ({
     id: r.id,
     title: r.title,
@@ -283,9 +332,9 @@ export async function fetchResourceCatalogApi(): Promise<ResourceCatalogItem[]> 
 
 export async function fetchPhysicalBookOrdersApi(): Promise<PhysicalBookOrderItem[]> {
   const res = await adminFetch("/api/admin/resources/orders");
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error(`Failed to fetch physical book orders: ${res.status}`);
   const data = await res.json();
-  if (!Array.isArray(data)) return [];
+  if (!Array.isArray(data)) throw new Error("Invalid list response from the API.");
   return data.map((o: any) => ({
     id: o.id,
     orderNumber: o.orderNumber,
@@ -310,17 +359,14 @@ export async function fetchPhysicalBookOrdersApi(): Promise<PhysicalBookOrderIte
 
 export async function fetchSystemUsersApi(): Promise<ConsoleUser[]> {
   const res = await adminFetch("/api/users");
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error(`Failed to fetch system users: ${res.status}`);
   const data = await res.json();
-  return Array.isArray(data) ? data : [];
+  if (!Array.isArray(data)) throw new Error("Invalid system users response from the API.");
+  return data;
 }
 
-export async function fetchAnonymousQuestionsApi(): Promise<AnonymousQuestionRecord[]> {
-  const res = await adminFetch("/api/admin/questions");
-  if (!res.ok) return [];
-  const data = await res.json();
-  if (!Array.isArray(data)) return [];
-  return data.map((q: any) => ({
+function mapAnonymousQuestion(q: any): AnonymousQuestionRecord {
+  return {
     id: q.id,
     referenceNumber: q.referenceNumber || `AQ-${q.id}`,
     category: q.category || "General",
@@ -330,7 +376,45 @@ export async function fetchAnonymousQuestionsApi(): Promise<AnonymousQuestionRec
     answer: q.answer || undefined,
     answeredAt: q.answeredAt ? formatDateTime(q.answeredAt) : undefined,
     assignedCounselor: q.assignedCounselor || undefined,
-  }));
+    postedToChannel: !!q.postedToChannel,
+    telegramMessageId: q.telegramMessageId || undefined,
+    postedToChannelAt: q.postedToChannelAt ? formatDateTime(q.postedToChannelAt) : undefined,
+    channelBroadcast: q.channelBroadcast,
+  };
+}
+
+export async function fetchAnonymousQuestionsApi(): Promise<AnonymousQuestionRecord[]> {
+  const res = await adminFetch("/api/admin/questions");
+  if (!res.ok) throw new Error(`Failed to fetch anonymous questions: ${res.status}`);
+  const data = await res.json();
+  if (!Array.isArray(data)) throw new Error("Invalid list response from the API.");
+  return data.map(mapAnonymousQuestion);
+}
+
+export async function fetchAnonymousQuestionsPageApi(params: {
+  page: number;
+  limit: number;
+  status: string;
+  search: string;
+}): Promise<{ items: AnonymousQuestionRecord[]; total: number; page: number; limit: number; totalPages: number }> {
+  const query = new URLSearchParams({
+    page: String(params.page),
+    limit: String(params.limit),
+    status: params.status,
+    search: params.search,
+  });
+  const res = await adminFetch(`/api/admin/questions?${query.toString()}`);
+  if (!res.ok) throw new Error(`Failed to fetch anonymous questions: ${res.status}`);
+
+  const result = await res.json();
+  if (!result || !Array.isArray(result.items) || typeof result.total !== "number") {
+    throw new Error("Invalid paginated questions response from the API.");
+  }
+
+  return {
+    ...result,
+    items: result.items.map(mapAnonymousQuestion),
+  };
 }
 
 // =================== MUTATIONS ===================
@@ -670,7 +754,7 @@ export async function fetchResourceOrdersApi(
   const res = await adminFetch(`/api/admin/resource-orders${query}`);
   if (!res.ok) throw new Error("Failed to load resource orders");
   const data = await res.json();
-  if (!Array.isArray(data)) return [];
+  if (!Array.isArray(data)) throw new Error("Invalid list response from the API.");
   return data.map((o: any) => ({
     id: o.id,
     orderNumber: o.orderNumber,
@@ -788,6 +872,55 @@ export async function fetchDonationsApi(
   }));
 }
 
+export async function fetchDonationsPageApi(params: {
+  page: number;
+  limit: number;
+  status: string;
+  paymentMethod: string;
+  search: string;
+}): Promise<{
+  items: DonationRecord[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}> {
+  const query = new URLSearchParams({
+    page: String(params.page),
+    limit: String(params.limit),
+    status: params.status,
+    paymentMethod: params.paymentMethod,
+    search: params.search,
+  });
+  const res = await adminFetch(`/api/admin/donations?${query.toString()}`);
+  if (!res.ok) throw new Error(`Failed to fetch donations: ${res.status}`);
+  const result = await res.json();
+  if (!result || !Array.isArray(result.items) || typeof result.total !== "number") {
+    throw new Error("Invalid paginated donations response from the API.");
+  }
+
+  return {
+    ...result,
+    items: result.items.map((donation: DonationRecord) => ({
+      ...donation,
+      createdAt: formatDateTime(donation.createdAt),
+      updatedAt: formatDateTime(donation.updatedAt),
+      verifiedAt: donation.verifiedAt ? formatDateTime(donation.verifiedAt) : null,
+    })),
+  };
+}
+
+export async function fetchDonationSummaryApi(): Promise<{
+  total: number;
+  verifiedAmount: number;
+  verifiedCount: number;
+  pendingCount: number;
+}> {
+  const res = await adminFetch("/api/admin/donations/summary");
+  if (!res.ok) throw new Error(`Failed to fetch donation summary: ${res.status}`);
+  return res.json();
+}
+
 export async function verifyDonationApi(
   id: number,
   adminNotes?: string
@@ -857,9 +990,9 @@ export async function fetchCourseCatalogApi(options?: {
 
   const qs = params.toString() ? `?${params.toString()}` : "";
   const res = await adminFetch(`/api/admin/courses/catalog${qs}`);
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error(`Failed to fetch course catalog: ${res.status}`);
   const data = await res.json();
-  if (!Array.isArray(data)) return [];
+  if (!Array.isArray(data)) throw new Error("Invalid list response from the API.");
   return data.map((c: any) => ({
     id: c.id,
     name: c.name,
@@ -885,7 +1018,7 @@ export async function fetchCourseCatalogApi(options?: {
 
 export async function fetchCourseDetailsApi(id: number): Promise<CourseCatalogItem | null> {
   const res = await adminFetch(`/api/admin/courses/catalog/${id}`);
-  if (!res.ok) return null;
+  if (!res.ok) throw new Error(`Failed to fetch course details: ${res.status}`);
   const c = await res.json();
   if (!c || !c.id) return null;
 

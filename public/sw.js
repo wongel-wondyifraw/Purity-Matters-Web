@@ -19,9 +19,8 @@ const STATIC_ASSETS = [
   "/favicon.png?v=3"
 ];
 
-// Install Event - Precache static icon assets and immediately activate
+// Install Event - Precache static icon assets; updated workers wait for user approval.
 self.addEventListener("install", (event) => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS);

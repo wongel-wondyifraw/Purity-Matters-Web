@@ -9,6 +9,7 @@ import React, {
   useMemo,
   ReactNode,
 } from "react";
+import { usePathname } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ClientRecord,
@@ -43,6 +44,7 @@ import {
   getApiUrl,
   fetchClientsApi,
   fetchCounselingApi,
+  fetchCounselingCountApi,
   fetchInnerHealingApi,
   fetchCoursesApi,
   fetchResourceSalesApi,
@@ -124,6 +126,7 @@ export interface AdminDataContextType {
   apiUrl: string;
   isRefreshing: boolean;
   isLoading: boolean;
+  dataError: string | null;
   isClientsLoading: boolean;
   isCounselingLoading: boolean;
   isInnerHealingLoading: boolean;
@@ -242,8 +245,27 @@ const AdminDataContext = createContext<AdminDataContextType | undefined>(undefin
 export function AdminDataProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const pathname = usePathname();
   const apiUrl = getApiUrl();
   const { isAuthenticated } = useAuth();
+
+  // Load shared dashboard data everywhere, and the remaining datasets only on
+  // screens that display them. Overview and reports intentionally need a broad view.
+  const isOverviewRoute = pathname === "/" || pathname === "/activities" || pathname === "/reports";
+  const needsClients = true;
+  const needsCounseling = isOverviewRoute;
+  // These five datasets drive the persistent sidebar counts on every screen.
+  const needsInnerHealing = true;
+  const needsCourses = true;
+  const needsCourseManagement = isOverviewRoute || pathname.startsWith("/courses");
+  const needsResourceSales = true;
+  const needsResourceCatalog = isOverviewRoute || pathname === "/resources";
+  const needsResources = needsResourceCatalog;
+  const needsUsers = isOverviewRoute || pathname === "/users" || pathname === "/counselling" || pathname === "/inner-healing";
+  // The questions management page owns a server-paginated query in its table.
+  const needsQuestions = isOverviewRoute;
+  // The donations screen uses a server-paginated query; summaries still load for overview pages.
+  const needsDonations = isOverviewRoute;
 
   // Local UI filters & clipboard state
   const [clientFilter, setClientFilter] = useState<string>("all");
@@ -292,109 +314,118 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
   // =================== TANSTACK QUERIES ===================
   // Optimized polling intervals: Never poll in background; responsive when visible without CPU choke
-  // All queries strictly enabled ONLY when a valid user session is authenticated.
+  // Each query also follows its screen's route flag so unused datasets stay dormant.
 
   const clientsQuery = useQuery({
     queryKey: ["admin", "clients"],
     queryFn: fetchClientsApi,
-    enabled: Boolean(isAuthenticated),
-    refetchInterval: 25000,
+    enabled: Boolean(isAuthenticated && needsClients),
+    refetchInterval: 60000,
     refetchIntervalInBackground: false,
   });
 
   const counselingQuery = useQuery({
     queryKey: ["admin", "counseling"],
     queryFn: fetchCounselingApi,
-    enabled: Boolean(isAuthenticated),
-    refetchInterval: 15000,
+    enabled: Boolean(isAuthenticated && needsCounseling),
+    refetchInterval: 45000,
+    refetchIntervalInBackground: false,
+  });
+
+  const counselingCountQuery = useQuery({
+    queryKey: ["admin", "counseling-count"],
+    queryFn: fetchCounselingCountApi,
+    enabled: Boolean(isAuthenticated && !needsCounseling),
+    staleTime: 30000,
+    refetchInterval: 120000,
     refetchIntervalInBackground: false,
   });
 
   const innerHealingQuery = useQuery({
     queryKey: ["admin", "inner-healing"],
     queryFn: fetchInnerHealingApi,
-    enabled: Boolean(isAuthenticated),
-    refetchInterval: 15000,
+    enabled: Boolean(isAuthenticated && needsInnerHealing),
+    refetchInterval: 45000,
     refetchIntervalInBackground: false,
   });
 
   const coursesQuery = useQuery({
     queryKey: ["admin", "courses"],
     queryFn: fetchCoursesApi,
-    enabled: Boolean(isAuthenticated),
-    refetchInterval: 45000,
+    enabled: Boolean(isAuthenticated && needsCourses),
+    refetchInterval: 60000,
     refetchIntervalInBackground: false,
   });
 
   const resourceSalesQuery = useQuery({
     queryKey: ["admin", "resource-sales"],
     queryFn: fetchResourceSalesApi,
-    enabled: Boolean(isAuthenticated),
-    refetchInterval: 25000,
+    enabled: Boolean(isAuthenticated && needsResourceSales),
+    refetchInterval: 60000,
     refetchIntervalInBackground: false,
   });
 
   const catalogQuery = useQuery({
     queryKey: ["admin", "resource-catalog"],
     queryFn: fetchResourceCatalogApi,
-    enabled: Boolean(isAuthenticated),
-    refetchInterval: 45000,
+    enabled: Boolean(isAuthenticated && needsResources),
+    refetchInterval: 60000,
     refetchIntervalInBackground: false,
   });
 
   const ordersQuery = useQuery({
     queryKey: ["admin", "physical-orders"],
     queryFn: fetchPhysicalBookOrdersApi,
-    enabled: Boolean(isAuthenticated),
-    refetchInterval: 15000,
+    enabled: Boolean(isAuthenticated && needsResources),
+    refetchInterval: 60000,
     refetchIntervalInBackground: false,
   });
 
   const usersQuery = useQuery({
     queryKey: ["admin", "users"],
     queryFn: fetchSystemUsersApi,
-    enabled: Boolean(isAuthenticated),
-    refetchInterval: 60000,
+    enabled: Boolean(isAuthenticated && needsUsers),
+    refetchInterval: 120000,
     refetchIntervalInBackground: false,
   });
 
   const questionsQuery = useQuery({
     queryKey: ["admin", "questions"],
     queryFn: fetchAnonymousQuestionsApi,
-    enabled: Boolean(isAuthenticated),
-    refetchInterval: 15000,
+    enabled: Boolean(isAuthenticated && needsQuestions),
+    refetchInterval: 60000,
     refetchIntervalInBackground: false,
   });
 
   const paymentSettingsQuery = useQuery({
     queryKey: ["admin", "payment-settings"],
     queryFn: fetchPaymentSettingsApi,
-    enabled: Boolean(isAuthenticated),
-    refetchInterval: 60000,
+    enabled: Boolean(isAuthenticated && needsResources),
+    refetchInterval: 120000,
     refetchIntervalInBackground: false,
   });
 
   const resourceOrdersQuery = useQuery<ResourceOrderRecord[]>({
     queryKey: ["admin", "resource-orders"],
     queryFn: () => fetchResourceOrdersApi(),
-    enabled: Boolean(isAuthenticated),
-    refetchInterval: 15000,
+    enabled: Boolean(isAuthenticated && needsResources),
+    refetchInterval: 60000,
     refetchIntervalInBackground: false,
   });
 
   const donationsQuery = useQuery<DonationRecord[]>({
     queryKey: ["admin", "donations"],
     queryFn: () => fetchDonationsApi(),
-    enabled: Boolean(isAuthenticated),
-    refetchInterval: 15000,
+    enabled: Boolean(isAuthenticated && needsDonations),
+    refetchInterval: 60000,
     refetchIntervalInBackground: false,
   });
 
   const courseCatalogQuery = useQuery<CourseCatalogItem[]>({
     queryKey: ["admin", "course-catalog"],
     queryFn: () => fetchCourseCatalogApi(),
-    enabled: Boolean(isAuthenticated),
-    refetchInterval: 30000,
+    enabled: Boolean(isAuthenticated && needsCourseManagement),
+    refetchInterval: 60000,
     refetchIntervalInBackground: false,
   });
 
@@ -413,8 +444,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const courseEnrollmentsQuery = useQuery<CourseEnrollmentRecord[]>({
     queryKey: ["admin", "course-enrollments", courseEnrollmentFilter],
     queryFn: () => fetchCourseEnrollmentsApi(courseEnrollmentFilter),
-    enabled: Boolean(isAuthenticated),
-    refetchInterval: 30000,
+    enabled: Boolean(isAuthenticated && needsCourseManagement),
+    refetchInterval: 60000,
     refetchIntervalInBackground: false,
   });
 
@@ -430,6 +461,29 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const isDonationsLoading = donationsQuery.isLoading;
   const isCourseCatalogLoading = courseCatalogQuery.isLoading;
   const isCourseEnrollmentsLoading = courseEnrollmentsQuery.isLoading;
+
+  const activeQueryError = [
+    needsClients && clientsQuery.isError ? clientsQuery.error : null,
+    needsCounseling && counselingQuery.isError ? counselingQuery.error : null,
+    !needsCounseling && counselingCountQuery.isError ? counselingCountQuery.error : null,
+    needsInnerHealing && innerHealingQuery.isError ? innerHealingQuery.error : null,
+    needsCourses && coursesQuery.isError ? coursesQuery.error : null,
+    needsResourceSales && resourceSalesQuery.isError ? resourceSalesQuery.error : null,
+    needsResources && catalogQuery.isError ? catalogQuery.error : null,
+    needsResources && ordersQuery.isError ? ordersQuery.error : null,
+    needsUsers && usersQuery.isError ? usersQuery.error : null,
+    needsQuestions && questionsQuery.isError ? questionsQuery.error : null,
+    needsResources && paymentSettingsQuery.isError ? paymentSettingsQuery.error : null,
+    needsResources && resourceOrdersQuery.isError ? resourceOrdersQuery.error : null,
+    needsDonations && donationsQuery.isError ? donationsQuery.error : null,
+    needsCourseManagement && courseCatalogQuery.isError ? courseCatalogQuery.error : null,
+    needsCourseManagement && courseEnrollmentsQuery.isError ? courseEnrollmentsQuery.error : null,
+  ].find((error) => error !== null);
+  const dataError = activeQueryError instanceof Error
+    ? activeQueryError.message
+    : activeQueryError
+      ? "Some dashboard data could not be loaded."
+      : null;
 
   const isLoading =
     isClientsLoading ||
@@ -861,7 +915,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       try {
         await queryClient.refetchQueries({ queryKey: ["admin"] });
         if (manual) {
-          toast.success("Dashboard Synced", "All live metrics and records updated.");
+          toast.success("Dashboard Synced", "Current screen data updated.");
         }
       } catch {
         if (manual) {
@@ -882,27 +936,18 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     triggerHaptic("medium");
     setIsRefreshing(true);
     try {
-      // 1. Purge browser CacheStorage (service worker caches) if present
-      if (typeof window !== "undefined" && "caches" in window) {
-        try {
-          const cacheKeys = await window.caches.keys();
-          await Promise.all(cacheKeys.map((k) => window.caches.delete(k)));
-        } catch {}
-      }
-      // 2. Cancel any pending in-flight queries
+      // Refresh only data used by the current screen; don't evict unrelated site caches.
       await queryClient.cancelQueries({ queryKey: ["admin"] });
-      // 3. Completely purge in-memory query cache entries
       queryClient.removeQueries({ queryKey: ["admin"] });
-      // 4. Force fresh live refetch from network with cache-busting
       await queryClient.refetchQueries({
         queryKey: ["admin"],
-        type: "all",
+        type: "active",
         exact: false,
       });
       triggerHaptic("success");
       toast.success(
         "Live Data Refreshed",
-        "Loaded latest bot registrations, anonymous questions, and orders."
+        "Loaded the latest records used on this screen."
       );
     } catch (err: any) {
       triggerHaptic("warning");
@@ -1288,7 +1333,9 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     [clients]
   );
 
-  const counselingCount = counselingRequests.length;
+  const counselingCount = needsCounseling
+    ? counselingRequests.length
+    : counselingCountQuery.data ?? counselingRequests.length;
   const innerHealingCount = innerHealingRequests.length;
   const coursesCount = courseProgressList.length;
   const resourceCount = resourceSales.length;
@@ -1636,6 +1683,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       apiUrl,
       isRefreshing,
       isLoading,
+      dataError,
       isClientsLoading,
       isCounselingLoading,
       isInnerHealingLoading,
@@ -1737,6 +1785,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       apiUrl,
       isRefreshing,
       isLoading,
+      dataError,
       isClientsLoading,
       isCounselingLoading,
       isInnerHealingLoading,
