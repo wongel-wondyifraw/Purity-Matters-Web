@@ -19,6 +19,7 @@ import {
 import { useAdminData } from "@/context/AdminDataContext";
 
 export function OverviewWidgets() {
+  const [currentTime] = useState(() => Date.now());
   const {
     clients,
     counselingRequests,
@@ -108,11 +109,11 @@ export function OverviewWidgets() {
     if (!dateStr) return false;
     const parsed = Date.parse(dateStr);
     if (!isNaN(parsed)) {
-      return Date.now() - parsed <= 24 * 60 * 60 * 1000;
+      return currentTime - parsed <= 24 * 60 * 60 * 1000;
     }
     const d = new Date(dateStr);
     if (!isNaN(d.getTime())) {
-      return Date.now() - d.getTime() <= 24 * 60 * 60 * 1000;
+      return currentTime - d.getTime() <= 24 * 60 * 60 * 1000;
     }
     return false;
   };

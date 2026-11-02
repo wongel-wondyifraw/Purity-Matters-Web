@@ -20,7 +20,11 @@ export function DemographicDonutCard({ title, segments }: DemographicDonutCardPr
   const strokeWidth = 14;
   const circumference = 2 * Math.PI * radius;
 
-  let accumulatedOffset = 0;
+  const segmentOffsets = segments.map((_, index) =>
+    -segments
+      .slice(0, index)
+      .reduce((offset, segment) => offset + (segment.percentage / 100) * circumference, 0),
+  );
 
   return (
     <div className="bg-white/90 rounded-2xl border border-black/[0.06] p-4 shadow-2xs space-y-3">
@@ -61,8 +65,7 @@ export function DemographicDonutCard({ title, segments }: DemographicDonutCardPr
             {/* Segments */}
             {segments.map((seg, idx) => {
               const dash = (seg.percentage / 100) * circumference;
-              const currentOffset = accumulatedOffset;
-              accumulatedOffset -= dash;
+              const currentOffset = segmentOffsets[idx];
 
               if (seg.percentage <= 0) return null;
 

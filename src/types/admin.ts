@@ -194,6 +194,7 @@ export interface AnonymousQuestionRecord {
   postedToChannel?: boolean;
   telegramMessageId?: number | null;
   postedToChannelAt?: string;
+  channelBroadcast?: { success: boolean; messageId?: number; error?: string } | null;
 }
 
 export interface ResourceCatalogItem {

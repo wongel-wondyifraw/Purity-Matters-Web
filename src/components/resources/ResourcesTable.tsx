@@ -515,7 +515,7 @@ export function ResourcesTable() {
                             No Resources Found
                           </p>
                           <p className="text-xs text-neutral-500">
-                            Click "+ Resource" to publish digital e-books or add physical books to the inventory.
+                            Click &quot;+ Resource&quot; to publish digital e-books or add physical books to the inventory.
                           </p>
                         </div>
                       </TableCell>

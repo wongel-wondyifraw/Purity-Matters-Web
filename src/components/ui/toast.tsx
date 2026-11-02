@@ -220,13 +220,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       });
     };
 
-    fn.success = success;
-    fn.error = error;
-    fn.info = info;
-    fn.warning = warning;
-    fn.dismiss = dismiss;
-
-    return fn as ToastCallable;
+    // Attach the compatibility methods to the callable toast API once per dependency set.
+    // eslint-disable-next-line react-hooks/refs
+    return Object.assign(fn, { success, error, info, warning, dismiss });
   }, [addToast, success, error, info, warning, dismiss]);
 
   return (

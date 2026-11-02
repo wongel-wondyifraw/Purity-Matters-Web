@@ -285,7 +285,7 @@ export function AnonymousQuestionsTable() {
                       <TableCell className="py-3.5 align-top min-w-[280px] max-w-[500px] whitespace-normal">
                         <div className="flex flex-col items-start gap-1.5">
                           <div className="border border-black/10 bg-white text-xs text-[#202328] font-medium px-3 py-1.5 rounded-xl shadow-2xs max-w-full whitespace-normal break-words leading-relaxed text-left">
-                            "{q.question}"
+                            &quot;{q.question}&quot;
                           </div>
                           {q.answer && (
                             <div className="text-[11px] text-neutral-600 bg-neutral-100/90 border border-black/5 rounded-lg px-2.5 py-1 whitespace-normal break-words leading-normal max-w-full text-left">
@@ -350,7 +350,7 @@ export function AnonymousQuestionsTable() {
                                   <span>Anonymous Inquirer Question</span>
                                 </DialogTitle>
                                 <DialogDescription className="text-xs text-neutral-500 mt-0.5">
-                                  Submitted {q.submittedAt}. The sender's identity is strictly anonymous.
+                                  Submitted {q.submittedAt}. The sender&apos;s identity is strictly anonymous.
                                 </DialogDescription>
                               </DialogHeader>
 
@@ -361,7 +361,7 @@ export function AnonymousQuestionsTable() {
                                     <ShieldAlert className="w-3.5 h-3.5 text-neutral-400" />
                                     Confidential Client Inquiry:
                                   </p>
-                                  "{q.question}"
+                                  &quot;{q.question}&quot;
                                 </div>
 
                                 {/* Response Draft */}
